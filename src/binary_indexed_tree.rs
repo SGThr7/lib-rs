@@ -38,6 +38,28 @@ where
 }
 
 #[codesnip::entry("BIT")]
+impl<T> BinaryIndexedTree<T>
+where
+    T: Copy + num::Zero + std::ops::Sub<Output = T> + std::cmp::PartialOrd,
+{
+    pub fn lower_bound(&self, x: T) -> usize {
+        let mut i = 0;
+        let mut len = self.len().next_power_of_two();
+        let mut x = x;
+        while len > 0 {
+            if i + len - 1 < self.len() && self.tree[i + len - 1] <= x {
+                x = x - self.tree[i + len - 1];
+                i += len;
+            }
+
+            len >>= 1;
+        }
+
+        i - 1
+    }
+}
+
+#[codesnip::entry("BIT")]
 impl<T> From<Vec<T>> for BinaryIndexedTree<T>
 where
     T: Copy + num::Zero,
@@ -88,5 +110,13 @@ mod tests {
             res
         };
         assert_eq!(sum, [1, 3, 6, 10, 15, 21, 28, 36]);
+    }
+
+    #[test]
+    fn lower_bound() {
+        let bit = BinaryIndexedTree::from(vec![1, 2, 3, 4, 5, 6, 7, 8]);
+        assert_eq!(bit.lower_bound(12), 3);
+        assert_eq!(bit.lower_bound(10), 3);
+        assert_eq!(bit.lower_bound(9), 2);
     }
 }
