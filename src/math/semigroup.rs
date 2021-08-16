@@ -48,9 +48,11 @@ mod tests {
         ($($testname:ident, $struct:tt;)*) => {
             $(#[test]
             fn $testname() {
+                // associativity
                 let a = $struct(0b101001101);
                 let b = $struct(0b100101011);
-                assert_eq!(a.op(b).0, b.op(a).0);
+                let c = $struct(0b100011011);
+                assert_eq!((a.op(b)).op(c), a.op(b.op(c)));
             })*
         };
     }

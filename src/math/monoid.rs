@@ -62,11 +62,14 @@ mod tests {
         ($($testname:ident, $struct:tt;)*) => {
             $(#[test]
             fn $testname() {
-                let e = $struct::e();
+                // associativity
                 let a = $struct(33);
-                assert_eq!(e.op(a), a.op(e));
                 let b = $struct(16);
-                assert_eq!(a.op(b), b.op(a));
+                let c = $struct(28);
+                assert_eq!((a.op(b)).op(c), a.op(b.op(c)));
+                // identity
+                let e = $struct::e();
+                assert_eq!(e.op(a), a.op(e));
             })*
         };
     }
