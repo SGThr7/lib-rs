@@ -41,26 +41,23 @@ define_primitive_semigroup!(MinSemigroup<core::cmp::Ord>, T::min);
 #[codesnip::entry("XorSemigroup", include("define_primitive_semigroup"))]
 define_primitive_semigroup!(XorSemigroup<core::ops::BitXor<Output = T>>, T::bitxor);
 
-#[cfg(test)]
-mod tests {
-    use super::{AddSemigroup, MaxSemigroup, MinSemigroup, MulSemigroup, Semigroup, XorSemigroup};
-    macro_rules! test_semigroups {
-        ($($testname:ident, $struct:tt;)*) => {
-            $(#[test]
-            fn $testname() {
-                // associativity
-                let a = $struct(0b101001101);
-                let b = $struct(0b100101011);
-                let c = $struct(0b100011011);
-                assert_eq!((a.op(b)).op(c), a.op(b.op(c)));
-            })*
-        };
-    }
-    test_semigroups!(
-        add, AddSemigroup;
-        mul, MulSemigroup;
-        max, MaxSemigroup;
-        min, MinSemigroup;
-        xor, XorSemigroup;
-    );
+macro_rules! test_semigroups {
+    ($($testname:ident: $struct:tt;)*) => {
+        $(#[test]
+        fn $testname() {
+            // associativity
+            let a = $struct(0b101001101);
+            let b = $struct(0b100101011);
+            let c = $struct(0b100011011);
+            assert_eq!((a.op(b)).op(c), a.op(b.op(c)));
+        })*
+    };
+}
+
+test_semigroups! {
+    add: AddSemigroup;
+    mul: MulSemigroup;
+    max: MaxSemigroup;
+    min: MinSemigroup;
+    xor: XorSemigroup;
 }

@@ -208,93 +208,88 @@ pub type MinSegTree<T> = SegmentedTree<MinMonoid<T>>;
 #[codesnip::entry(include("SegmentedTree", "XorMonoid"))]
 pub type XorSegTree<T> = SegmentedTree<XorMonoid<T>>;
 
-#[cfg(test)]
-mod tests {
-    use super::{AddSegTree, MaxSegTree, MinSegTree, MulSegTree, XorSegTree};
+#[test]
+fn add_seg_tree() {
+    let st = AddSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
+    assert_eq!(st.query(..), Some(28.into()));
+    assert_eq!(st.query(2..4), Some(7.into()));
+    assert_eq!(st.query(3..=4), Some(9.into()));
+    assert_eq!(st.query(5..), Some(13.into()));
 
-    #[test]
-    fn add_seg_tree() {
-        let st = AddSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-        assert_eq!(st.query(..), Some(28.into()));
-        assert_eq!(st.query(2..4), Some(7.into()));
-        assert_eq!(st.query(3..=4), Some(9.into()));
-        assert_eq!(st.query(5..), Some(13.into()));
+    assert_eq!(st.query(..1), Some(1.into()));
+    assert_eq!(st.query(..2), Some(3.into()));
+    assert_eq!(st.query(..3), Some(6.into()));
+    assert_eq!(st.query(..4), Some(10.into()));
+    assert_eq!(st.query(..5), Some(15.into()));
+    assert_eq!(st.query(..6), Some(21.into()));
+    assert_eq!(st.query(..7), Some(28.into()));
+}
 
-        assert_eq!(st.query(..1), Some(1.into()));
-        assert_eq!(st.query(..2), Some(3.into()));
-        assert_eq!(st.query(..3), Some(6.into()));
-        assert_eq!(st.query(..4), Some(10.into()));
-        assert_eq!(st.query(..5), Some(15.into()));
-        assert_eq!(st.query(..6), Some(21.into()));
-        assert_eq!(st.query(..7), Some(28.into()));
-    }
+#[test]
+fn mul_seg_tree() {
+    let st = MulSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
+    assert_eq!(st.query(..), Some(5040.into()));
+    assert_eq!(st.query(2..4), Some(12.into()));
+    assert_eq!(st.query(3..=4), Some(20.into()));
+    assert_eq!(st.query(5..), Some(42.into()));
 
-    #[test]
-    fn mul_seg_tree() {
-        let st = MulSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-        assert_eq!(st.query(..), Some(5040.into()));
-        assert_eq!(st.query(2..4), Some(12.into()));
-        assert_eq!(st.query(3..=4), Some(20.into()));
-        assert_eq!(st.query(5..), Some(42.into()));
+    assert_eq!(st.query(..1), Some(1.into()));
+    assert_eq!(st.query(..2), Some(2.into()));
+    assert_eq!(st.query(..3), Some(6.into()));
+    assert_eq!(st.query(..4), Some(24.into()));
+    assert_eq!(st.query(..5), Some(120.into()));
+    assert_eq!(st.query(..6), Some(720.into()));
+    assert_eq!(st.query(..7), Some(5040.into()));
+}
 
-        assert_eq!(st.query(..1), Some(1.into()));
-        assert_eq!(st.query(..2), Some(2.into()));
-        assert_eq!(st.query(..3), Some(6.into()));
-        assert_eq!(st.query(..4), Some(24.into()));
-        assert_eq!(st.query(..5), Some(120.into()));
-        assert_eq!(st.query(..6), Some(720.into()));
-        assert_eq!(st.query(..7), Some(5040.into()));
-    }
+#[test]
+fn max_seg_tree() {
+    let st = MaxSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
+    assert_eq!(st.query(..), Some(7.into()));
+    assert_eq!(st.query(2..4), Some(4.into()));
+    assert_eq!(st.query(3..=4), Some(5.into()));
+    assert_eq!(st.query(5..), Some(7.into()));
 
-    #[test]
-    fn max_seg_tree() {
-        let st = MaxSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-        assert_eq!(st.query(..), Some(7.into()));
-        assert_eq!(st.query(2..4), Some(4.into()));
-        assert_eq!(st.query(3..=4), Some(5.into()));
-        assert_eq!(st.query(5..), Some(7.into()));
+    assert_eq!(st.query(..1), Some(1.into()));
+    assert_eq!(st.query(..2), Some(2.into()));
+    assert_eq!(st.query(..3), Some(3.into()));
+    assert_eq!(st.query(..4), Some(4.into()));
+    assert_eq!(st.query(..5), Some(5.into()));
+    assert_eq!(st.query(..6), Some(6.into()));
+    assert_eq!(st.query(..7), Some(7.into()));
+}
 
-        assert_eq!(st.query(..1), Some(1.into()));
-        assert_eq!(st.query(..2), Some(2.into()));
-        assert_eq!(st.query(..3), Some(3.into()));
-        assert_eq!(st.query(..4), Some(4.into()));
-        assert_eq!(st.query(..5), Some(5.into()));
-        assert_eq!(st.query(..6), Some(6.into()));
-        assert_eq!(st.query(..7), Some(7.into()));
-    }
+#[test]
+fn min_seg_tree() {
+    let st = MinSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
+    assert_eq!(st.query(..), Some(1.into()));
+    assert_eq!(st.query(2..4), Some(3.into()));
+    assert_eq!(st.query(3..=4), Some(4.into()));
+    assert_eq!(st.query(5..), Some(6.into()));
 
-    #[test]
-    fn min_seg_tree() {
-        let st = MinSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-        assert_eq!(st.query(..), Some(1.into()));
-        assert_eq!(st.query(2..4), Some(3.into()));
-        assert_eq!(st.query(3..=4), Some(4.into()));
-        assert_eq!(st.query(5..), Some(6.into()));
+    assert_eq!(st.query(..1), Some(1.into()));
+    assert_eq!(st.query(..2), Some(1.into()));
+    assert_eq!(st.query(..3), Some(1.into()));
+    assert_eq!(st.query(..4), Some(1.into()));
+    assert_eq!(st.query(..5), Some(1.into()));
+    assert_eq!(st.query(..6), Some(1.into()));
+    assert_eq!(st.query(..7), Some(1.into()));
+}
 
-        assert_eq!(st.query(..1), Some(1.into()));
-        assert_eq!(st.query(..2), Some(1.into()));
-        assert_eq!(st.query(..3), Some(1.into()));
-        assert_eq!(st.query(..4), Some(1.into()));
-        assert_eq!(st.query(..5), Some(1.into()));
-        assert_eq!(st.query(..6), Some(1.into()));
-        assert_eq!(st.query(..7), Some(1.into()));
-    }
+#[test]
+fn xor_seg_tree() {
+    // [001, 010, 011, 100, 101, 110, 111]
+    let st = XorSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
+    assert_eq!(st.query(..), Some(0.into()));
+    assert_eq!(st.query(2..4), Some(7.into()));
+    assert_eq!(st.query(3..=4), Some(1.into()));
+    assert_eq!(st.query(5..), Some(1.into()));
 
-    #[test]
-    fn xor_seg_tree() {
-        // [001, 010, 011, 100, 101, 110, 111]
-        let st = XorSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-        assert_eq!(st.query(..), Some(0.into()));
-        assert_eq!(st.query(2..4), Some(7.into()));
-        assert_eq!(st.query(3..=4), Some(1.into()));
-        assert_eq!(st.query(5..), Some(1.into()));
-
-        assert_eq!(st.query(..1), Some(1.into()));
-        assert_eq!(st.query(..2), Some(3.into()));
-        assert_eq!(st.query(..3), Some(0.into()));
-        assert_eq!(st.query(..4), Some(4.into()));
-        assert_eq!(st.query(..5), Some(1.into()));
-        assert_eq!(st.query(..6), Some(7.into()));
-        assert_eq!(st.query(..7), Some(0.into()));
-    }
+    assert_eq!(st.query(..1), Some(1.into()));
+    assert_eq!(st.query(..2), Some(3.into()));
+    assert_eq!(st.query(..3), Some(0.into()));
+    assert_eq!(st.query(..4), Some(4.into()));
+    assert_eq!(st.query(..5), Some(1.into()));
+    assert_eq!(st.query(..6), Some(7.into()));
+    assert_eq!(st.query(..7), Some(0.into()));
 }

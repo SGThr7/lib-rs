@@ -34,7 +34,7 @@ define_primitive_group!(AddGroup<num::Zero, core::ops::Neg<Output = T>>, T::add,
 define_primitive_group!(MulGroup<num::One, num::traits::Inv<Output = T>>, T::mul, T::one(), T::inv);
 
 macro_rules! test_group {
-    ($($testname:ident, $struct:tt;)*) => {
+    ($($testname:ident: $struct:tt;)*) => {
         $(#[test]
         fn $testname() {
             // associativity
@@ -53,6 +53,6 @@ macro_rules! test_group {
 }
 
 test_group! {
-   add, AddGroup;
-   mul, MulGroup;
+   add: AddGroup;
+   mul: MulGroup;
 }

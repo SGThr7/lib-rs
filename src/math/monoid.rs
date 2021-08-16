@@ -53,32 +53,26 @@ define_primitive_monoid!(
     T::zero()
 );
 
-#[cfg(test)]
-mod tests {
-    use super::{AddMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid, XorMonoid};
-    use crate::math::semigroup::Semigroup;
+macro_rules! test_monoid {
+    ($($testname:ident: $struct:tt;)*) => {
+        $(#[test]
+        fn $testname() {
+            // associativity
+            let a = $struct(33);
+            let b = $struct(16);
+            let c = $struct(28);
+            assert_eq!((a.op(b)).op(c), a.op(b.op(c)));
+            // identity
+            let e = $struct::e();
+            assert_eq!(e.op(a), a.op(e));
+        })*
+    };
+}
 
-    macro_rules! test_monoid {
-        ($($testname:ident, $struct:tt;)*) => {
-            $(#[test]
-            fn $testname() {
-                // associativity
-                let a = $struct(33);
-                let b = $struct(16);
-                let c = $struct(28);
-                assert_eq!((a.op(b)).op(c), a.op(b.op(c)));
-                // identity
-                let e = $struct::e();
-                assert_eq!(e.op(a), a.op(e));
-            })*
-        };
-    }
-
-    test_monoid!(
-        add, AddMonoid;
-        mul, MulMonoid;
-        max, MaxMonoid;
-        min, MinMonoid;
-        xor, XorMonoid;
-    );
+test_monoid! {
+    add: AddMonoid;
+    mul: MulMonoid;
+    max: MaxMonoid;
+    min: MinMonoid;
+    xor: XorMonoid;
 }
