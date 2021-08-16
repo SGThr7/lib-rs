@@ -20,7 +20,7 @@ macro_rules! impl_group {
 #[codesnip::entry(include("impl_group", "impl_traits"))]
 macro_rules! define_primitive_group {
     ($name:ident <$($bounds:path),*>, $fn:path, $e:expr, $inv:path) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         pub struct $name<T: $($bounds+)*>(T);
         impl_group!($name <$($bounds),*>, $fn, $e, $inv);
         impl_traits!($name <$($bounds),*>);

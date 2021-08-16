@@ -27,7 +27,7 @@ macro_rules! impl_monoid {
 #[macro_export]
 macro_rules! define_primitive_monoid {
     ($name:ident <$($bounds:path),*>, $fn:path, $e:expr) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         pub struct $name<T: $($bounds+)*>(T);
         impl_monoid!($name <$($bounds),*>, $fn, $e);
         impl_traits!($name <$($bounds),*>);

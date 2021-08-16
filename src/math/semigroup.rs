@@ -19,7 +19,7 @@ macro_rules! impl_semigroup {
 #[macro_export]
 macro_rules! define_primitive_semigroup {
     ($name:ident <$($bounds:path),*>, $fn:path) => {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         pub struct $name<T: $($bounds+)*>(T);
         impl_semigroup!($name <$($bounds),*>, $fn);
         impl_traits!($name <$($bounds),*>);

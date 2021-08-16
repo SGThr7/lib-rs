@@ -1,16 +1,18 @@
-#[codesnip::entry("BIT")]
-pub struct BinaryIndexedTree<T> {
-    pub(crate) tree: Vec<T>,
+use crate::math::{
+    group::{AddGroup, Group, MulGroup},
+    monoid::Monoid,
+};
+
+#[codesnip::entry(include("Monoid"))]
+pub struct BinaryIndexedTree<T: Monoid + Copy> {
+    tree: Vec<T>,
 }
 
-#[codesnip::entry("BIT")]
-impl<T> BinaryIndexedTree<T>
-where
-    T: Copy + num::Zero,
-{
+#[codesnip::entry("BinaryIndexedTree", include("Monoid", "Group"))]
+impl<T: Monoid + Copy> BinaryIndexedTree<T> {
     pub fn new(size: usize) -> Self {
         Self {
-            tree: vec![T::zero(); size],
+            tree: vec![T::e(); size],
         }
     }
 
@@ -18,105 +20,137 @@ where
         self.tree.len()
     }
 
-    pub fn add(&mut self, i: usize, x: T) {
-        let mut i = i as isize;
-        while (i as usize) < self.tree.len() {
-            self.tree[i as usize] = self.tree[i as usize] + x;
-            i += (i + 1) & -(i + 1);
+    /// Least Significant Bit
+    fn lsb(i: usize) -> usize {
+        let i = i + 1;
+        i & (!i + 1)
+    }
+
+    /// O(log(N))
+    ///
+    /// N: array length
+    ///
+    /// Operate to element.
+    pub fn operate(&mut self, mut index: usize, rhs: T) {
+        let len = self.len();
+        while index < len {
+            self.tree[index] = self.tree[index].op(rhs);
+            index += Self::lsb(index);
         }
     }
 
-    pub fn sum(&self, i: usize) -> T {
-        let mut res = T::zero();
-        let mut i = i as isize;
-        while i >= 0 {
-            res = res + self.tree[i as usize];
-            i -= (i + 1) & -(i + 1);
+    /// O(log(N))
+    ///
+    /// N: array length
+    ///
+    /// Get query of `0..right` (half-open range).
+    pub fn query(&self, right: usize) -> T {
+        let mut res = T::e();
+        if right <= 0 {
+            return res;
+        }
+        let mut i = right - 1;
+        loop {
+            res = res.op(self.tree[i]);
+            let lsb = Self::lsb(i);
+            if i < lsb {
+                break;
+            }
+            i -= lsb;
+        }
+        res
+    }
+
+    pub fn range_query<R>(&self, range: R) -> T
+    where
+        T: Group,
+        R: core::ops::RangeBounds<usize>,
+    {
+        let start = match range.start_bound() {
+            std::ops::Bound::Included(&l) => l,
+            std::ops::Bound::Excluded(&l) => l + 1,
+            std::ops::Bound::Unbounded => 0,
+        };
+        let end = match range.end_bound() {
+            std::ops::Bound::Included(&r) => r + 1,
+            std::ops::Bound::Excluded(&r) => r,
+            std::ops::Bound::Unbounded => self.len(),
+        };
+        self.query(end).op(self.query(start).inv())
+    }
+
+    pub fn lower_bound(&self, x: impl Into<T>) -> usize
+    where
+        T: Group + core::cmp::PartialOrd,
+    {
+        let mut x = x.into();
+        let n = self.len();
+        let mut i = 0;
+        let mut len = n.next_power_of_two();
+        while len > 0 {
+            if i + len - 1 < n && self.tree[i + len - 1] <= x {
+                x = x.op(self.tree[i + len - 1].inv());
+                i += len - 1;
+            }
+            len >>= 1;
+        }
+        i
+    }
+}
+
+#[codesnip::entry("BinaryIndexedTree", include("Monoid"))]
+impl<T: Monoid + Copy, F: Into<T>> From<Vec<F>> for BinaryIndexedTree<T> {
+    fn from(v: Vec<F>) -> Self {
+        let mut res = Self::new(v.len());
+        for (i, x) in v.into_iter().enumerate() {
+            res.operate(i, x.into());
         }
         res
     }
 }
 
-#[codesnip::entry("BIT")]
-impl<T> BinaryIndexedTree<T>
-where
-    T: Copy + num::Zero + std::ops::Sub<Output = T> + std::cmp::PartialOrd,
-{
-    pub fn lower_bound(&self, x: T) -> usize {
-        let mut i = 0;
-        let mut len = self.len().next_power_of_two();
-        let mut x = x;
-        while len > 0 {
-            if i + len - 1 < self.len() && self.tree[i + len - 1] <= x {
-                x = x - self.tree[i + len - 1];
-                i += len;
-            }
+#[codesnip::entry(include("BinaryIndexedTree", "AddGroup"))]
+pub type AddBIT<T> = BinaryIndexedTree<AddGroup<T>>;
 
-            len >>= 1;
-        }
+#[codesnip::entry(include("BinaryIndexedTree", "MulGroup"))]
+pub type MulBIT<T> = BinaryIndexedTree<MulGroup<T>>;
 
-        i - 1
-    }
+#[test]
+fn lsb() {
+    use rand::{thread_rng, Rng};
+    type Test = AddBIT<isize>;
+    let mut rng = thread_rng();
+    (0..10)
+        .map(|_| rng.gen::<isize>())
+        .for_each(|x| assert_eq!(Test::lsb((x - 1) as usize), (x & -x) as usize));
+    assert_eq!(Test::lsb(0b01 - 1), 0b01);
+    assert_eq!(Test::lsb(0b10 - 1), 0b10);
+    assert_eq!(Test::lsb(0b11 - 1), 0b01);
 }
 
-#[codesnip::entry("BIT")]
-impl<T> From<Vec<T>> for BinaryIndexedTree<T>
-where
-    T: Copy + num::Zero,
-{
-    fn from(ar: Vec<T>) -> Self {
-        let mut bit = BinaryIndexedTree::new(ar.len());
-        for i in 0..ar.len() {
-            bit.add(i, ar[i]);
-        }
-        bit
-    }
+#[test]
+fn query() {
+    let bit = AddBIT::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    assert_eq!(bit.query(0), 0.into());
+    assert_eq!(bit.query(1), 1.into());
+    assert_eq!(bit.query(2), 3.into());
+    assert_eq!(bit.query(3), 6.into());
+    assert_eq!(bit.query(4), 10.into());
+    assert_eq!(bit.query(5), 15.into());
+    assert_eq!(bit.query(6), 21.into());
+    assert_eq!(bit.query(7), 28.into());
+    assert_eq!(bit.query(8), 36.into());
+    assert_eq!(bit.query(9), 45.into());
+
+    assert_eq!(bit.range_query(2..5), 12.into());
+    assert_eq!(bit.range_query(2..=5), 18.into());
+    assert_eq!(bit.range_query(2..), 42.into());
+    assert_eq!(bit.range_query(..3), 6.into());
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn new() {
-        const LEN: usize = 10;
-        let bit = BinaryIndexedTree::<i32>::new(LEN);
-        assert_eq!(bit.tree, [0; LEN]);
-        assert_eq!(bit.len(), LEN)
-    }
-
-    #[test]
-    fn from() {
-        let bit = BinaryIndexedTree::from(vec![1, 2, 3, 4, 5, 6, 7, 8]);
-        assert_eq!(bit.tree, [1, 3, 3, 10, 5, 11, 7, 36]);
-        assert_eq!(bit.len(), 8);
-    }
-
-    #[test]
-    fn add() {
-        let mut bit = BinaryIndexedTree::new(8);
-        bit.add(0, 3);
-        assert_eq!(bit.tree, [3, 3, 0, 3, 0, 0, 0, 3]);
-    }
-
-    #[test]
-    fn sum() {
-        let bit = BinaryIndexedTree::from(vec![1, 2, 3, 4, 5, 6, 7, 8]);
-        let sum = {
-            let mut res = Vec::with_capacity(bit.len());
-            for i in 0..bit.len() {
-                res.push(bit.sum(i));
-            }
-            res
-        };
-        assert_eq!(sum, [1, 3, 6, 10, 15, 21, 28, 36]);
-    }
-
-    #[test]
-    fn lower_bound() {
-        let bit = BinaryIndexedTree::from(vec![1, 2, 3, 4, 5, 6, 7, 8]);
-        assert_eq!(bit.lower_bound(12), 3);
-        assert_eq!(bit.lower_bound(10), 3);
-        assert_eq!(bit.lower_bound(9), 2);
-    }
+#[test]
+fn lower_bound() {
+    let bit = AddBIT::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    assert_eq!(bit.lower_bound(19), 4);
+    assert_eq!(bit.lower_bound(15), 4);
 }
