@@ -8,7 +8,7 @@ pub trait Monoid: Semigroup {
 #[codesnip::entry(include("Monoid", "impl_semigroup"))]
 #[macro_export]
 macro_rules! impl_monoid {
-    ($name:ident <$($bounds:path),*>, $e:expr, $fn:path) => {
+    ($name:ident <$($bounds:path),*>, $fn:path, $e:expr) => {
         impl<T: $($bounds+)*> Monoid for $name<T> {
             fn e() -> Self {
                 $e.into()
@@ -26,31 +26,31 @@ macro_rules! impl_monoid {
 #[codesnip::entry(include("impl_monoid", "impl_traits"))]
 #[macro_export]
 macro_rules! define_primitive_monoid {
-    ($name:ident <$($bounds:path),*>, $e:expr, $fn:path) => {
+    ($name:ident <$($bounds:path),*>, $fn:path, $e:expr) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq)]
         pub struct $name<T: $($bounds+)*>(T);
-        impl_monoid!($name <$($bounds),*>, $e, $fn);
+        impl_monoid!($name <$($bounds),*>, $fn, $e);
         impl_traits!($name <$($bounds),*>);
     };
 }
 
 #[codesnip::entry("AddMonoid", include("define_primitive_monoid"))]
-define_primitive_monoid!(AddMonoid<num::Zero>, T::zero(), T::add);
+define_primitive_monoid!(AddMonoid<num::Zero>, T::add, T::zero());
 
 #[codesnip::entry("MulMonoid", include("define_primitive_monoid"))]
-define_primitive_monoid!(MulMonoid<num::One>, T::one(), T::mul);
+define_primitive_monoid!(MulMonoid<num::One>, T::mul, T::one());
 
 #[codesnip::entry("MaxMonoid", include("define_primitive_monoid"))]
-define_primitive_monoid!(MaxMonoid<core::cmp::Ord, num::Bounded>, T::min_value(), T::max);
+define_primitive_monoid!(MaxMonoid<core::cmp::Ord, num::Bounded>, T::max, T::min_value());
 
 #[codesnip::entry("MinMonoid", include("define_primitive_monoid"))]
-define_primitive_monoid!(MinMonoid<core::cmp::Ord, num::Bounded>, T::max_value(), T::min);
+define_primitive_monoid!(MinMonoid<core::cmp::Ord, num::Bounded>, T::min, T::max_value());
 
 #[codesnip::entry("XorMonoid", include("define_primitive_monoid"))]
 define_primitive_monoid!(
     XorMonoid<core::ops::BitXor<Output = T>, num::Zero>,
-    T::zero(),
-    T::bitxor
+    T::bitxor,
+    T::zero()
 );
 
 #[cfg(test)]
