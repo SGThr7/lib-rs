@@ -1,12 +1,12 @@
 use crate::math::monoid::{AddMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid, XorMonoid};
 
 #[codesnip::entry(include("Monoid"))]
-pub struct SegmentedTree<T: Monoid + Copy> {
+pub struct SegmentTree<T: Monoid + Copy> {
     tree: Vec<T>,
 }
 
-#[codesnip::entry("SegmentedTree", include("Monoid"))]
-impl<T: Monoid + Copy> SegmentedTree<T> {
+#[codesnip::entry("SegmentTree", include("Monoid"))]
+impl<T: Monoid + Copy> SegmentTree<T> {
     /// O(n)
     pub fn new(n: usize) -> Self {
         Self::init(n, Vec::<T>::new())
@@ -165,8 +165,8 @@ impl<T: Monoid + Copy> SegmentedTree<T> {
     }
 }
 
-#[codesnip::entry("SegmentedTree")]
-impl<T: Monoid + Copy> core::ops::Index<usize> for SegmentedTree<T> {
+#[codesnip::entry("SegmentTree")]
+impl<T: Monoid + Copy> core::ops::Index<usize> for SegmentTree<T> {
     type Output = T;
     /// O(1)
     fn index(&self, index: usize) -> &Self::Output {
@@ -176,8 +176,8 @@ impl<T: Monoid + Copy> core::ops::Index<usize> for SegmentedTree<T> {
     }
 }
 
-#[codesnip::entry("SegmentedTree")]
-impl<T: Monoid + Copy, F: Into<T>> From<Vec<F>> for SegmentedTree<T> {
+#[codesnip::entry("SegmentTree")]
+impl<T: Monoid + Copy, F: Into<T>> From<Vec<F>> for SegmentTree<T> {
     /// O(N)
     /// N: v length
     fn from(v: Vec<F>) -> Self {
@@ -185,8 +185,8 @@ impl<T: Monoid + Copy, F: Into<T>> From<Vec<F>> for SegmentedTree<T> {
     }
 }
 
-#[codesnip::entry("SegmentedTree")]
-impl<T: Monoid + Copy, F: Into<T>> core::iter::FromIterator<F> for SegmentedTree<T> {
+#[codesnip::entry("SegmentTree")]
+impl<T: Monoid + Copy, F: Into<T>> core::iter::FromIterator<F> for SegmentTree<T> {
     /// O(N)
     /// N: iter length
     fn from_iter<S>(iter: S) -> Self
@@ -197,16 +197,16 @@ impl<T: Monoid + Copy, F: Into<T>> core::iter::FromIterator<F> for SegmentedTree
     }
 }
 
-#[codesnip::entry(include("SegmentedTree", "AddMonoid"))]
-pub type AddSegTree<T> = SegmentedTree<AddMonoid<T>>;
-#[codesnip::entry(include("SegmentedTree", "MulMonoid"))]
-pub type MulSegTree<T> = SegmentedTree<MulMonoid<T>>;
-#[codesnip::entry(include("SegmentedTree", "MaxMonoid"))]
-pub type MaxSegTree<T> = SegmentedTree<MaxMonoid<T>>;
-#[codesnip::entry(include("SegmentedTree", "MinMonoid"))]
-pub type MinSegTree<T> = SegmentedTree<MinMonoid<T>>;
-#[codesnip::entry(include("SegmentedTree", "XorMonoid"))]
-pub type XorSegTree<T> = SegmentedTree<XorMonoid<T>>;
+#[codesnip::entry(include("SegmentTree", "AddMonoid"))]
+pub type AddSegTree<T> = SegmentTree<AddMonoid<T>>;
+#[codesnip::entry(include("SegmentTree", "MulMonoid"))]
+pub type MulSegTree<T> = SegmentTree<MulMonoid<T>>;
+#[codesnip::entry(include("SegmentTree", "MaxMonoid"))]
+pub type MaxSegTree<T> = SegmentTree<MaxMonoid<T>>;
+#[codesnip::entry(include("SegmentTree", "MinMonoid"))]
+pub type MinSegTree<T> = SegmentTree<MinMonoid<T>>;
+#[codesnip::entry(include("SegmentTree", "XorMonoid"))]
+pub type XorSegTree<T> = SegmentTree<XorMonoid<T>>;
 
 #[test]
 fn add_seg_tree() {
