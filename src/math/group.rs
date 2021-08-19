@@ -48,6 +48,7 @@ macro_rules! test_group {
             // inverse
             let ia = a.inv();
             assert_eq!(a.op(ia), e);
+            assert_eq!(ia.op(a), e);
         })*
     };
 }

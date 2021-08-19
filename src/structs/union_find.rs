@@ -74,3 +74,16 @@ impl UnionFind {
         true
     }
 }
+
+#[test]
+fn union_set() {
+    let size = 10;
+    let mut uf = UnionFind::new(size);
+    for i in 0..size {
+        uf.union(i, i % 2);
+    }
+    for i in 0..size {
+        assert_eq!(uf.size_mut(i), size / 2);
+        assert!(uf.equiv(i, (i + 2) % size));
+    }
+}
