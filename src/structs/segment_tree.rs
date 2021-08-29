@@ -1,295 +1,488 @@
-use crate::math::monoid::{AddMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid, XorMonoid};
+use crate::math::structs::{
+    ActMonoid, AddMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid, ReplaceMax, ReplaceMin,
+    Semigroup,
+};
 
 #[codesnip::entry(include("Monoid"))]
-pub struct SegmentTree<T: Monoid + Copy> {
-    tree: Vec<T>,
+pub struct SegmentTree<M: Monoid> {
+    n: usize,
+    tree: Vec<M::Set>,
 }
 
 #[codesnip::entry("SegmentTree", include("Monoid"))]
-impl<T: Monoid + Copy> SegmentTree<T> {
-    /// O(n)
+impl<M: Monoid> SegmentTree<M> {
     pub fn new(n: usize) -> Self {
-        Self::init(n, Vec::<T>::new())
+        Self::init(n, &vec![])
     }
 
-    /// O(n)
-    fn init(n: usize, v: Vec<impl Into<T>>) -> Self {
-        let n = n.next_power_of_two();
-        let size = n * 2 - 1;
-        let mut tree = vec![T::e(); size];
-        v.into_iter()
-            .enumerate()
-            .for_each(|(i, x)| tree[i + n - 1] = x.into());
-        let mut res = Self { tree };
-        res.update_nodes();
+    fn init(n: usize, s: &[M::Set]) -> Self {
+        // let n = n.next_power_of_two();
+        let mut tree = vec![M::identity(); n * 2 - 1];
+        tree[n - 1..n - 1 + s.len()].clone_from_slice(s);
+        let mut res = Self { n, tree };
+        for i in (0..n - 1).rev() {
+            res.update(i);
+        }
         res
     }
 
-    /// O(N)
-    /// N: count of leaves
-    fn update_nodes(&mut self) {
-        let n = self.len();
-        let mut len = n / 2;
-        let mut i0 = n - 1 - len;
-        while len > 0 {
-            for i in i0..i0 + len {
-                let a = self.tree[i * 2 + 1];
-                let b = self.tree[i * 2 + 2];
-                self.tree[i] = a.op(b);
-            }
-            len /= 2;
-            i0 -= len;
-        }
+    fn operate_children(&self, i: usize) -> M::Set {
+        M::operate(&self.tree[i * 2 + 1], &self.tree[i * 2 + 2])
     }
 
-    /// O(1)
-    pub fn len(&self) -> usize {
-        (self.tree.len() + 1) / 2
+    fn update(&mut self, i: usize) {
+        self.tree[i] = self.operate_children(i);
     }
 
-    pub fn get_children(&self, index: usize) -> (T, T) {
-        (self.tree[index * 2 + 1], self.tree[index * 2 + 2])
-    }
-
-    /// O(log(N))
-    /// N: count of leaves
-    pub fn set(&mut self, index: usize, value: T) {
-        assert!(index < self.len());
-        let mut i = index + self.len() - 1;
+    pub fn set(&mut self, index: usize, value: M::Set) {
+        assert!(index < self.n);
+        let mut i = index + self.n - 1;
         self.tree[i] = value;
         while i > 0 {
             i = (i - 1) / 2;
-            let (a, b) = self.get_children(i);
-            self.tree[i] = a.op(b);
+            self.update(i);
         }
     }
 
-    /// O(log(N))
-    /// N: count of leaves
-    pub fn operate(&mut self, index: usize, rhs: T) {
-        assert!(index < self.len());
-        let mut i = index + self.len() - 1;
-        self.tree[i] = self.tree[i].op(rhs);
-        while i > 0 {
-            i = (i - 1) / 2;
-            let (a, b) = self.get_children(i);
-            self.tree[i] = a.op(b);
-        }
+    pub fn get<I>(&self, index: I) -> Option<&I::Output>
+    where
+        I: core::slice::SliceIndex<[M::Set]>,
+    {
+        self.tree[self.n - 1..].get(index)
     }
 
-    /// O(log(N))
-    /// N: count of leaves
-    pub fn set_range<R>(&mut self, range: R, value: T)
+    pub fn query<R>(&self, range: R) -> M::Set
     where
         R: core::ops::RangeBounds<usize>,
     {
-        use core::ops::Bound::{Excluded, Included, Unbounded};
-        let start = match range.start_bound() {
-            Included(&l) => l,
-            Excluded(&l) => l + 1,
-            Unbounded => 0,
-        };
-        let end = match range.end_bound() {
-            Included(&r) => r + 1,
-            Excluded(&r) => r,
-            Unbounded => self.len(),
-        };
-        assert!(end <= self.len());
-
-        let pad = self.len() - 1;
-        let mut parentq = std::collections::VecDeque::with_capacity(self.len());
-        for i in start + pad..end + pad {
-            self.tree[i] = value;
-            // parent
-            let p = i / 2;
-            if parentq.back() != Some(&p) {
-                parentq.push_back(p);
-            }
-        }
-        // update nodes
-        while let Some(p) = parentq.pop_front() {
-            let (a, b) = self.get_children(p);
-            self.tree[p] = a.op(b);
-            if p == 0 {
-                break;
-            }
-            // grand parent
-            let gp = p / 2;
-            if parentq.back() != Some(&gp) {
-                parentq.push_back(gp);
-            }
-        }
-    }
-
-    /// O(log(N))
-    /// N: count of leaves
-    pub fn query<R>(&self, range: R) -> Option<T>
-    where
-        R: core::ops::RangeBounds<usize>,
-    {
-        let n = self.len();
-        let start = match range.start_bound() {
+        let l = match range.start_bound() {
             core::ops::Bound::Included(&l) => l,
             core::ops::Bound::Excluded(&l) => l + 1,
             core::ops::Bound::Unbounded => 0,
         };
-        let end = match range.end_bound() {
+        let r = match range.end_bound() {
             core::ops::Bound::Included(&r) => r + 1,
             core::ops::Bound::Excluded(&r) => r,
-            core::ops::Bound::Unbounded => n,
+            core::ops::Bound::Unbounded => self.n,
         };
-        if start > end || end > n {
-            None
-        } else {
-            self._query(start, end, 0, 0, n)
+        assert!(l <= r);
+        assert!(r <= self.n);
+
+        let mut l = l + self.n - 1;
+        let mut r = r + self.n - 1;
+
+        let is_odd = |x: usize| x & 1 == 0;
+        let div2 = |x: &mut usize| *x >>= 1;
+
+        let mut vl = M::identity();
+        let mut vr = M::identity();
+        while l < r {
+            if is_odd(l) {
+                vl = M::operate(&vl, &self.tree[l]);
+            }
+            if is_odd(r) {
+                r -= 1;
+                vr = M::operate(&self.tree[r], &vr);
+            }
+            div2(&mut l);
+            div2(&mut r);
         }
+        M::operate(&vl, &vr)
+    }
+}
+
+#[codesnip::entry("SegmentTree", include("Monoid"))]
+impl<M: Monoid> From<Vec<M::Set>> for SegmentTree<M> {
+    fn from(v: Vec<M::Set>) -> Self {
+        Self::init(v.len(), &v)
+    }
+}
+
+#[codesnip::entry("SegmentTree", include("Monoid"))]
+impl<M, I> core::ops::Index<I> for SegmentTree<M>
+where
+    M: Monoid,
+    I: core::slice::SliceIndex<[M::Set]>,
+{
+    type Output = <I as core::slice::SliceIndex<[M::Set]>>::Output;
+
+    fn index(&self, index: I) -> &Self::Output {
+        core::ops::Index::index(&self.tree[self.n - 1..], index)
+    }
+}
+
+#[codesnip::entry("AddSegmentTree", include("SegmentTree", "AddMonoid"))]
+pub type AddSegTree<T> = SegmentTree<AddMonoid<T>>;
+#[codesnip::entry("MulSegmentTree", include("SegmentTree", "MulMonoid"))]
+pub type MulSegTree<T> = SegmentTree<MulMonoid<T>>;
+#[codesnip::entry("MaxSegmentTree", include("SegmentTree", "MaxMonoid"))]
+pub type MaxSegTree<T> = SegmentTree<MaxMonoid<T>>;
+#[codesnip::entry("MinSegmentTree", include("SegmentTree", "MinMonoid"))]
+pub type MinSegTree<T> = SegmentTree<MinMonoid<T>>;
+
+#[cfg(test)]
+mod test_segtree {
+    use super::SegmentTree;
+    use crate::math::structs::{AddMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid, XorMonoid};
+    use core::cmp::PartialEq;
+    use std::fmt::Debug;
+
+    macro_rules! test_segtree {
+        ($($name:ident, $monoid:ident)*) => {$(
+            #[test]
+            fn $name() {
+                type Mono<T> = $monoid<T>;
+                type Seg<T> = SegmentTree<Mono<T>>;
+                let v = vec![2, 7, 1, 8, 2, 8, 1, 8, 2, 8, 4, 6];
+                let n = v.len();
+
+                // from test
+                let segtree: Seg<_> = v.clone().into();
+                check_segtree(&v, &segtree);
+
+                // set test
+                let mut segtree = Seg::new(n);
+                let mut ans = vec![Mono::identity(); n];
+                for i in 0..n {
+                    segtree.set(i, v[i]);
+                    ans[i] = v[i];
+                    check_segtree(&ans, &segtree);
+                }
+            }
+        )*};
     }
 
-    /// O(log(N))
-    /// N: count of leaves
-    fn _query(&self, s: usize, e: usize, i: usize, l: usize, r: usize) -> Option<T> {
-        if r <= s || e <= l {
-            None
-        } else if s <= l && r <= e {
-            Some(self.tree[i])
-        } else {
-            let a = self._query(s, e, i * 2 + 1, l, (l + r) / 2);
-            let b = self._query(s, e, i * 2 + 2, (l + r) / 2, r);
-            match (a, b) {
-                (None, None) => None,
-                (None, Some(b)) => Some(b),
-                (Some(a), None) => Some(a),
-                (Some(a), Some(b)) => Some(a.op(b)),
+    test_segtree! {
+        add, AddMonoid
+        mul, MulMonoid
+        max, MaxMonoid
+        min, MinMonoid
+        xor, XorMonoid
+    }
+
+    fn check_segtree<M>(ans: &[M::Set], segtree: &SegmentTree<M>)
+    where
+        M: Monoid,
+        M::Set: Debug + PartialEq,
+    {
+        let n = ans.len();
+        // get for each
+        for i in 0..n {
+            assert_eq!(ans[i], *(segtree.get(i)).unwrap());
+        }
+
+        // query for each range
+        for i in 0..=n {
+            for k in i..=n {
+                assert_eq!(
+                    ans[i..k]
+                        .iter()
+                        .fold(M::identity(), |a, b| M::operate(&a, &b)),
+                    segtree.query(i..k),
+                    "range: `{}..{}`",
+                    i,
+                    k
+                );
             }
         }
     }
 }
 
-#[codesnip::entry("SegmentTree")]
-impl<T: Monoid + Copy> core::ops::Index<usize> for SegmentTree<T> {
-    type Output = T;
-    /// O(1)
-    fn index(&self, index: usize) -> &Self::Output {
-        assert!(index < self.len());
-        let index = index + self.len() - 1;
-        &self.tree[index]
-    }
+#[codesnip::entry(include("ActMonoid", "Semigroup"))]
+pub struct LazySegmentTree<AM: ActMonoid> {
+    n: usize,
+    depth: usize,
+    tree: Vec<<AM::Monoid as Semigroup>::Set>,
+    lazy: Vec<AM::Act>,
 }
 
-#[codesnip::entry("SegmentTree")]
-impl<T: Monoid + Copy, F: Into<T>> From<Vec<F>> for SegmentTree<T> {
-    /// O(N)
-    /// N: v length
-    fn from(v: Vec<F>) -> Self {
-        Self::init(v.len(), v)
+#[codesnip::entry("LazySegmentTree", include("ActMonoid", "Semigroup"))]
+impl<AM: ActMonoid> LazySegmentTree<AM> {
+    pub fn new(size: usize) -> Self {
+        Self::init(size, &vec![])
     }
-}
 
-#[codesnip::entry("SegmentTree")]
-impl<T: Monoid + Copy, F: Into<T>> core::iter::FromIterator<F> for SegmentTree<T> {
-    /// O(N)
-    /// N: iter length
-    fn from_iter<S>(iter: S) -> Self
+    fn init(n: usize, s: &[<AM::Monoid as Semigroup>::Set]) -> Self {
+        let depth = (32 - (n.saturating_sub(1) as u32).leading_zeros()) as usize;
+        let n = 1 << depth;
+        let size = n * 2 - 1;
+        let mut tree = vec![AM::identity(); size];
+        tree[n - 1..n - 1 + s.len()].clone_from_slice(s);
+        let lazy = vec![AM::identity_act(); n - 1];
+
+        for i in (0..n - 1).rev() {
+            let lhs = &tree[i * 2 + 1];
+            let rhs = &tree[i * 2 + 2];
+            tree[i] = AM::operate(lhs, rhs);
+        }
+
+        Self {
+            n,
+            depth,
+            tree,
+            lazy,
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.n
+    }
+
+    pub fn depth(&self) -> usize {
+        self.depth
+    }
+
+    fn eval(&mut self, i: usize) {
+        if self.is_leaves(i) {
+            return;
+        }
+        if let Some((li, ri)) = self.get_children_index(i) {
+            if self.is_leaves(li) && self.is_leaves(ri) {
+                self.tree[li] = AM::act(&self.tree[li], &self.lazy[i]);
+                self.tree[ri] = AM::act(&self.tree[ri], &self.lazy[i]);
+            } else {
+                self.lazy[li] = AM::merge_act(&self.lazy[li], &self.lazy[i]);
+                self.lazy[ri] = AM::merge_act(&self.lazy[ri], &self.lazy[i]);
+            }
+        }
+        self.tree[i] = AM::act(&self.tree[i], &self.lazy[i]);
+        self.lazy[i] = AM::identity_act();
+    }
+
+    pub fn get(&mut self, index: usize) -> Option<&<AM::Monoid as Semigroup>::Set>
     where
-        S: IntoIterator<Item = F>,
+        <AM::Monoid as Semigroup>::Set: core::fmt::Debug,
+        AM::Act: core::fmt::Debug,
     {
-        Self::from(iter.into_iter().collect::<Vec<_>>())
+        if self.len() <= index {
+            return None;
+        }
+
+        let mut l = 0;
+        let mut r = self.len();
+        let mut i = 0;
+        while r - l != 1 {
+            self.eval(i);
+            let mid = (r - l) / 2 + l;
+            if l <= index && index < mid {
+                r = mid;
+                i = i * 2 + 1;
+            } else if mid <= index && index < r {
+                l = mid;
+                i = i * 2 + 2;
+            }
+        }
+        assert_eq!(index, l);
+        self.eval(i);
+        Some(&self.tree[i])
+    }
+
+    pub fn query<R>(&mut self, range: R) -> <AM::Monoid as Semigroup>::Set
+    where
+        R: core::ops::RangeBounds<usize>,
+        <AM::Monoid as Semigroup>::Set: core::fmt::Debug,
+        AM::Act: core::fmt::Debug,
+    {
+        use core::ops::Bound::{Excluded, Included, Unbounded};
+        let s = match range.start_bound() {
+            Included(&l) => l,
+            Excluded(&l) => l + 1,
+            Unbounded => 0,
+        };
+        let e = match range.end_bound() {
+            Included(&r) => r + 1,
+            Excluded(&r) => r,
+            Unbounded => self.len(),
+        };
+        assert!(e <= self.len());
+
+        self._query(s, e, 0, 0, self.len())
+    }
+
+    fn _query(
+        &mut self,
+        s: usize,
+        e: usize,
+        i: usize,
+        l: usize,
+        r: usize,
+    ) -> <AM::Monoid as Semigroup>::Set
+    where
+        <AM::Monoid as Semigroup>::Set: core::fmt::Debug,
+        AM::Act: core::fmt::Debug,
+    {
+        self.eval(i);
+        if s <= l && r <= e {
+            self.tree[i].clone()
+        } else if s < r && l < e {
+            let left = self._query(s, e, i * 2 + 1, l, (l + r) / 2);
+            let right = self._query(s, e, i * 2 + 2, (l + r) / 2, r);
+            AM::operate(&left, &right)
+        } else {
+            AM::identity()
+        }
+    }
+
+    pub fn range_apply<R>(&mut self, range: R, value: AM::Act)
+    where
+        R: core::ops::RangeBounds<usize>,
+        <AM::Monoid as Semigroup>::Set: core::fmt::Debug,
+        AM::Act: core::fmt::Debug,
+    {
+        use core::ops::Bound::{Excluded, Included, Unbounded};
+        let s = match range.start_bound() {
+            Included(&l) => l,
+            Excluded(&l) => l + 1,
+            Unbounded => 0,
+        };
+        let e = match range.end_bound() {
+            Included(&r) => r + 1,
+            Excluded(&r) => r,
+            Unbounded => self.n,
+        };
+        assert!(e <= self.len());
+        assert!(s <= e);
+
+        self._range_apply(s, e, value, 0, 0, self.len())
+    }
+
+    fn _range_apply(&mut self, s: usize, e: usize, v: AM::Act, i: usize, l: usize, r: usize)
+    where
+        <AM::Monoid as Semigroup>::Set: core::fmt::Debug,
+        AM::Act: core::fmt::Debug,
+    {
+        println!("{}, {}, {:?}, {}, {}, {}", s, e, &v, i, l, r);
+        self.eval(i);
+        if s <= l && r <= e {
+            if self.is_leaves(i) {
+                self.tree[i] = AM::act(&self.tree[i], &v);
+            } else {
+                self.lazy[i] = AM::merge_act(&self.lazy[i], &v);
+                self.eval(i);
+            }
+        } else if s < r && l < e {
+            if let Some((li, ri)) = self.get_children_index(i) {
+                let mid = (r - l) / 2 + l;
+                self._range_apply(s, e, v.clone(), li, l, mid);
+                self._range_apply(s, e, v.clone(), ri, mid, r);
+                self.tree[i] = AM::operate(&self.tree[li], &self.tree[ri]);
+            }
+        }
+    }
+
+    fn is_leaves(&self, i: usize) -> bool {
+        let n = self.len();
+        n - 1 <= i && i < self.tree.len()
+    }
+
+    fn get_children_index(&self, i: usize) -> Option<(usize, usize)> {
+        if self.is_leaves(i) {
+            None
+        } else {
+            Some((i * 2 + 1, i * 2 + 2))
+        }
     }
 }
 
-#[codesnip::entry(include("SegmentTree", "AddMonoid"))]
-pub type AddSegTree<T> = SegmentTree<AddMonoid<T>>;
-#[codesnip::entry(include("SegmentTree", "MulMonoid"))]
-pub type MulSegTree<T> = SegmentTree<MulMonoid<T>>;
-#[codesnip::entry(include("SegmentTree", "MaxMonoid"))]
-pub type MaxSegTree<T> = SegmentTree<MaxMonoid<T>>;
-#[codesnip::entry(include("SegmentTree", "MinMonoid"))]
-pub type MinSegTree<T> = SegmentTree<MinMonoid<T>>;
-#[codesnip::entry(include("SegmentTree", "XorMonoid"))]
-pub type XorSegTree<T> = SegmentTree<XorMonoid<T>>;
-
-#[test]
-fn add_seg_tree() {
-    let st = AddSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-    assert_eq!(st.query(..), Some(28.into()));
-    assert_eq!(st.query(2..4), Some(7.into()));
-    assert_eq!(st.query(3..=4), Some(9.into()));
-    assert_eq!(st.query(5..), Some(13.into()));
-
-    assert_eq!(st.query(..1), Some(1.into()));
-    assert_eq!(st.query(..2), Some(3.into()));
-    assert_eq!(st.query(..3), Some(6.into()));
-    assert_eq!(st.query(..4), Some(10.into()));
-    assert_eq!(st.query(..5), Some(15.into()));
-    assert_eq!(st.query(..6), Some(21.into()));
-    assert_eq!(st.query(..7), Some(28.into()));
+#[codesnip::entry("LazySegmentTree", include("ActMonoid", "Semigroup"))]
+impl<AM: ActMonoid> From<Vec<<AM::Monoid as Semigroup>::Set>> for LazySegmentTree<AM> {
+    fn from(v: Vec<<AM::Monoid as Semigroup>::Set>) -> Self {
+        Self::init(v.len(), &v)
+    }
 }
 
-#[test]
-fn mul_seg_tree() {
-    let st = MulSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-    assert_eq!(st.query(..), Some(5040.into()));
-    assert_eq!(st.query(2..4), Some(12.into()));
-    assert_eq!(st.query(3..=4), Some(20.into()));
-    assert_eq!(st.query(5..), Some(42.into()));
+#[codesnip::entry("LazySegmentTree", include("ActMonoid", "Semigroup"))]
+impl<AM> core::fmt::Debug for LazySegmentTree<AM>
+where
+    AM: ActMonoid,
+    <AM::Monoid as Semigroup>::Set: core::fmt::Debug,
+    AM::Act: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use std::fmt::Write;
 
-    assert_eq!(st.query(..1), Some(1.into()));
-    assert_eq!(st.query(..2), Some(2.into()));
-    assert_eq!(st.query(..3), Some(6.into()));
-    assert_eq!(st.query(..4), Some(24.into()));
-    assert_eq!(st.query(..5), Some(120.into()));
-    assert_eq!(st.query(..6), Some(720.into()));
-    assert_eq!(st.query(..7), Some(5040.into()));
+        for i in 0..self.depth() {
+            let l = (1 << i) - 1;
+            let r = (1 << (i + 1)) - 1;
+            for k in l..r {
+                f.write_fmt(format_args!("{:?}[{:?}]\t", self.tree[k], self.lazy[k]))?;
+            }
+            f.write_char('\n')?;
+        }
+        let n = self.len();
+        for i in (n - 1)..(n * 2 - 1) {
+            f.write_fmt(format_args!("{:?}\t", self.tree[i]))?;
+        }
+        Ok(())
+    }
 }
 
-#[test]
-fn max_seg_tree() {
-    let st = MaxSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-    assert_eq!(st.query(..), Some(7.into()));
-    assert_eq!(st.query(2..4), Some(4.into()));
-    assert_eq!(st.query(3..=4), Some(5.into()));
-    assert_eq!(st.query(5..), Some(7.into()));
+#[codesnip::entry(include("LazySegmentTree", "ReplaceMax"))]
+pub type RepMaxLazySegmentTree<T> = LazySegmentTree<ReplaceMax<T>>;
 
-    assert_eq!(st.query(..1), Some(1.into()));
-    assert_eq!(st.query(..2), Some(2.into()));
-    assert_eq!(st.query(..3), Some(3.into()));
-    assert_eq!(st.query(..4), Some(4.into()));
-    assert_eq!(st.query(..5), Some(5.into()));
-    assert_eq!(st.query(..6), Some(6.into()));
-    assert_eq!(st.query(..7), Some(7.into()));
-}
+#[codesnip::entry(include("LazySegmentTree", "ReplaceMin"))]
+pub type RepMinLazySegmentTree<T> = LazySegmentTree<ReplaceMin<T>>;
 
-#[test]
-fn min_seg_tree() {
-    let st = MinSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-    assert_eq!(st.query(..), Some(1.into()));
-    assert_eq!(st.query(2..4), Some(3.into()));
-    assert_eq!(st.query(3..=4), Some(4.into()));
-    assert_eq!(st.query(5..), Some(6.into()));
+#[cfg(test)]
+mod test_lazy_segtree {
+    use super::LazySegmentTree;
+    use crate::math::structs::{ActMonoid, ReplaceMax, ReplaceMin, Semigroup};
+    use core::cmp::PartialEq;
+    use std::fmt::Debug;
 
-    assert_eq!(st.query(..1), Some(1.into()));
-    assert_eq!(st.query(..2), Some(1.into()));
-    assert_eq!(st.query(..3), Some(1.into()));
-    assert_eq!(st.query(..4), Some(1.into()));
-    assert_eq!(st.query(..5), Some(1.into()));
-    assert_eq!(st.query(..6), Some(1.into()));
-    assert_eq!(st.query(..7), Some(1.into()));
-}
+    macro_rules! test_segtree {
+        ($($name:ident, $monoid:ident)*) => {$(
+            #[test]
+            fn $name() {
+                type Mono<T> = $monoid<T>;
+                type Seg<T> = LazySegmentTree<Mono<T>>;
+                let v = vec![2, 7, 1, 8, 2, 8, 1, 8, 2, 8, 4, 6];
+                check_segtree(&v, &mut Seg::from(v.clone()));
 
-#[test]
-fn xor_seg_tree() {
-    // [001, 010, 011, 100, 101, 110, 111]
-    let st = XorSegTree::from(vec![1, 2, 3, 4, 5, 6, 7]);
-    assert_eq!(st.query(..), Some(0.into()));
-    assert_eq!(st.query(2..4), Some(7.into()));
-    assert_eq!(st.query(3..=4), Some(1.into()));
-    assert_eq!(st.query(5..), Some(1.into()));
+                let len = 14;
+                let mut ans = vec![Mono::identity(); len];
+                let mut segtree = Seg::new(len);
+                for i in 0..len {
+                    for k in i..=len {
+                        for m in i..k {
+                            ans[m] = Mono::act(&ans[m], &Some(33));
+                        }
+                        segtree.range_apply(i..k, Some(33));
+                        check_segtree(&ans, &mut segtree);
+                    }
+                }
+            }
+        )*};
+    }
 
-    assert_eq!(st.query(..1), Some(1.into()));
-    assert_eq!(st.query(..2), Some(3.into()));
-    assert_eq!(st.query(..3), Some(0.into()));
-    assert_eq!(st.query(..4), Some(4.into()));
-    assert_eq!(st.query(..5), Some(1.into()));
-    assert_eq!(st.query(..6), Some(7.into()));
-    assert_eq!(st.query(..7), Some(0.into()));
+    test_segtree! {
+        replace_max, ReplaceMax
+        replace_min, ReplaceMin
+    }
+
+    fn check_segtree<AM>(ans: &[<AM::Monoid as Semigroup>::Set], segtree: &mut LazySegmentTree<AM>)
+    where
+        AM: ActMonoid,
+        <AM::Monoid as Semigroup>::Set: Debug + PartialEq,
+        <AM::Monoid as Semigroup>::Set: core::fmt::Debug,
+        AM::Act: core::fmt::Debug,
+    {
+        let n = ans.len();
+        // get for each
+        for i in 0..n {
+            assert_eq!(Some(&ans[i]), segtree.get(i));
+        }
+
+        // query for each
+        for i in 0..n {
+            for k in i..=n {
+                let ans = ans[i..k]
+                    .iter()
+                    .fold(AM::identity(), |a, b| AM::operate(&a, b));
+                let r = segtree.query(i..k);
+                println!("{}..{},{:?}", i, k, &segtree);
+                assert_eq!(ans, r, "range: `{}..{}`", i, k);
+            }
+        }
+    }
 }

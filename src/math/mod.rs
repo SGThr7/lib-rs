@@ -1,5 +1,2 @@
-#[macro_use]
-pub mod semigroup;
-#[macro_use]
-pub mod monoid;
-pub mod group;
+pub mod num;
+pub mod structs;
