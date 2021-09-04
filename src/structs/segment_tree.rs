@@ -26,12 +26,8 @@ impl<M: Monoid> SegmentTree<M> {
         res
     }
 
-    fn operate_children(&self, i: usize) -> M::Set {
-        M::operate(&self.tree[i * 2 + 1], &self.tree[i * 2 + 2])
-    }
-
     fn update(&mut self, i: usize) {
-        self.tree[i] = self.operate_children(i);
+        self.tree[i] = M::operate(&self.tree[i * 2 + 1], &self.tree[i * 2 + 2]);
     }
 
     pub fn set(&mut self, index: usize, value: M::Set) {

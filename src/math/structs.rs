@@ -6,12 +6,13 @@ pub trait Semigroup {
     fn operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set;
 }
 
-#[codesnip::entry]
+#[codesnip::entry(include("Semigroup"))]
 pub trait Monoid: Semigroup {
     fn identity() -> Self::Set;
 }
 
-#[codesnip::entry(include("Monoid"))]
+#[codesnip::entry(include("Monoid", "Semigroup"))]
+#[macro_export]
 macro_rules! define_monoid {
     ($monoid:ident<T: $($bounds:path),*>, |$lhs:ident, $rhs:ident| $operate:expr, $identity:expr) => {
         pub struct $monoid<S>(core::marker::PhantomData<S>);
