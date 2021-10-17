@@ -1,8 +1,8 @@
-use crate::math::structs::Monoid;
+use crate::math::math_structs::monoid;
 
 #[codesnip::entry("BinaryIndexedTree", include("Monoid"))]
 pub mod binary_indexed_tree {
-    use super::Monoid;
+    use super::monoid::Monoid;
     use core::{
         fmt::Debug,
         iter::FusedIterator,
@@ -275,7 +275,7 @@ pub mod binary_indexed_tree {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use crate::math::structs::AddMonoid;
+        use crate::math::math_structs::monoid::AddMonoid;
         type BITree<T> = BinaryIndexedTree<AddMonoid<T>>;
 
         #[test]
