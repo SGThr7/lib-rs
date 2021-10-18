@@ -9,6 +9,7 @@ define_modint_map!(ModIntMap1000000007, ModInt1000000007);
 define_modint_map!(ModIntMap998244353, ModInt998244353);
 
 #[codesnip::entry(include("ModInt", "Modulo"))]
+#[allow(unused_macros)]
 macro_rules! define_modint_map {
     ($name:ident, $modint:ident) => {
         pub struct $name {
@@ -142,6 +143,7 @@ macro_rules! define_modint_map {
     };
 }
 #[codesnip::entry("define_modint_map")]
+#[allow(unused_imports)]
 pub(crate) use define_modint_map;
 
 #[cfg(test)]

@@ -1,4 +1,3 @@
-#[codesnip::entry("Semigroup")]
 /// [Semigroup](https://en.wikipedia.org/wiki/Semigroup) is an algebraic structure consisting of a set together with an associative binary operation.
 ///
 /// # Associativity
@@ -6,6 +5,7 @@
 /// ~~~text
 /// ∀ a, b, c ∈ Set, (a ∘ b) ∘ c = a ∘ (b ∘ c)
 /// ~~~
+#[codesnip::entry("Semigroup")]
 pub trait Semigroup {
     type Set: Clone;
 

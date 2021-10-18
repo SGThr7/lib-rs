@@ -22,11 +22,11 @@ mod monoid_add {
 
     pub use monoid_add_impl::AddMonoid;
     mod monoid_add_impl {
-    use super::{define_monoid, Zero};
-    use core::ops::Add;
+        use super::{define_monoid, Zero};
+        use core::ops::Add;
 
-    define_monoid!(AddMonoid<T: Add<Output = T>, Zero>, |lhs,rhs| lhs+rhs, T::zero());
-}
+        define_monoid!(AddMonoid<T: Add<Output = T>, Zero>, |lhs,rhs| lhs+rhs, T::zero());
+    }
 }
 pub use monoid_add::*;
 
@@ -37,11 +37,11 @@ mod monoid_mul {
 
     pub use monoid_mul_impl::MulMonoid;
     mod monoid_mul_impl {
-    use super::{define_monoid, One};
-    use core::ops::Mul;
+        use super::{define_monoid, One};
+        use core::ops::Mul;
 
-    define_monoid!(MulMonoid<T: Mul<Output = T>, One>, |lhs,rhs| lhs*rhs, T::one());
-}
+        define_monoid!(MulMonoid<T: Mul<Output = T>, One>, |lhs,rhs| lhs*rhs, T::one());
+    }
 }
 pub use monoid_mul::*;
 
@@ -52,10 +52,10 @@ mod monoid_max {
 
     pub use monoid_max_impl::MaxMonoid;
     mod monoid_max_impl {
-    use super::{define_monoid, BoundedBelow};
+        use super::{define_monoid, BoundedBelow};
 
-    define_monoid!(MaxMonoid<T: Ord, BoundedBelow>, |lhs,rhs| T::max(lhs,rhs), T::lower_bound());
-}
+        define_monoid!(MaxMonoid<T: Ord, BoundedBelow>, |lhs,rhs| T::max(lhs,rhs), T::lower_bound());
+    }
 }
 pub use monoid_max::*;
 
@@ -66,10 +66,10 @@ mod monoid_min {
 
     pub use monoid_min_impl::MinMonoid;
     mod monoid_min_impl {
-    use super::{define_monoid, BoundedAbove};
+        use super::{define_monoid, BoundedAbove};
 
-    define_monoid!(MinMonoid<T: Ord, BoundedAbove>, |lhs,rhs| T::min(lhs,rhs), T::upper_bound());
-}
+        define_monoid!(MinMonoid<T: Ord, BoundedAbove>, |lhs,rhs| T::min(lhs,rhs), T::upper_bound());
+    }
 }
 pub use monoid_min::*;
 
@@ -80,11 +80,11 @@ mod monoid_bitxor {
 
     pub use monoid_bitxor_impl::BitXorMonoid;
     mod monoid_bitxor_impl {
-    use super::{define_monoid, Zero};
-    use core::ops::BitXor;
+        use super::{define_monoid, Zero};
+        use core::ops::BitXor;
 
-    define_monoid!(BitXorMonoid<T: BitXor<Output = T>, Zero>, |lhs,rhs| lhs^rhs, T::zero());
-}
+        define_monoid!(BitXorMonoid<T: BitXor<Output = T>, Zero>, |lhs,rhs| lhs^rhs, T::zero());
+    }
 }
 pub use monoid_bitxor::*;
 
@@ -95,15 +95,16 @@ mod monoid_bitor {
 
     pub use monoid_bitor_impl::BitOrMonoid;
     mod monoid_bitor_impl {
-    use super::{define_monoid, Zero};
-    use core::ops::BitOr;
+        use super::{define_monoid, Zero};
+        use core::ops::BitOr;
 
-    define_monoid!(BitOrMonoid<T: BitOr<Output = T>, Zero>, |lhs,rhs| lhs|rhs, T::zero());
-}
+        define_monoid!(BitOrMonoid<T: BitOr<Output = T>, Zero>, |lhs,rhs| lhs|rhs, T::zero());
+    }
 }
 pub use monoid_bitor::*;
 
-#[codesnip::entry]
+#[codesnip::entry(include("Monoid", "Semigroup"))]
+#[allow(unused_macros)]
 macro_rules! define_monoid {
     (@impl $monoid:ident<T:$($bounds:path),*>, |$lhs:ident, $rhs:ident| $expr:expr, $identity:expr) => {
         impl<T: Clone + $($bounds+)*> Semigroup for $monoid<T> {
@@ -127,4 +128,5 @@ macro_rules! define_monoid {
     };
 }
 #[codesnip::entry("define_monoid")]
-pub(super) use define_monoid;
+#[allow(unused_imports)]
+pub(crate) use define_monoid;

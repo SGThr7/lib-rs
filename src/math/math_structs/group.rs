@@ -12,6 +12,7 @@ use crate::math::{
 /// ~~~text
 /// ∀ a ∈ Set, ∃ b ∈ Set, a ◦ b = b ◦ a = e
 /// ~~~
+#[codesnip::entry(include("Monoid"))]
 pub trait MathGroup: Monoid {
     fn inverse(x: &Self::Set) -> Self::Set;
     fn inv_operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set {
@@ -27,11 +28,11 @@ mod math_group_add {
     pub use math_group_add_impl::AddGroup;
     mod math_group_add_impl {
 
-    use super::{define_math_group, Zero};
-    use core::ops::{Add, Neg};
+        use super::{define_math_group, Zero};
+        use core::ops::{Add, Neg};
 
-    define_math_group!(AddGroup<T: Add<Output = T>, Zero, Neg<Output = T>>, |lhs,rhs| lhs+rhs, T::zero(), |x| -x);
-}
+        define_math_group!(AddGroup<T: Add<Output = T>, Zero, Neg<Output = T>>, |lhs,rhs| lhs+rhs, T::zero(), |x| -x);
+    }
 }
 pub use math_group_add::*;
 
@@ -42,11 +43,11 @@ mod math_group_mul {
 
     pub use math_group_mul_impl::MulGroup;
     mod math_group_mul_impl {
-    use super::{define_math_group, One, Reciprocal};
-    use core::ops::{Div, Mul};
+        use super::{define_math_group, One, Reciprocal};
+        use core::ops::{Div, Mul};
 
-    define_math_group!(MulGroup<T: Mul<Output = T>, One, Div<Output = T>, Reciprocal<Output = T>>, |lhs,rhs| lhs*rhs, T::one(), |x| x.reciprocal());
-}
+        define_math_group!(MulGroup<T: Mul<Output = T>, One, Div<Output = T>, Reciprocal<Output = T>>, |lhs,rhs| lhs*rhs, T::one(), |x| x.reciprocal());
+    }
 }
 pub use math_group_mul::*;
 
@@ -57,15 +58,16 @@ mod math_group_bitxor {
 
     pub use math_group_bitxor_impl::BitXorGroup;
     mod math_group_bitxor_impl {
-    use super::{define_math_group, Zero};
-    use core::ops::BitXor;
+        use super::{define_math_group, Zero};
+        use core::ops::BitXor;
 
-    define_math_group!(BitXorGroup<T: BitXor<Output = T>, Zero>, |lhs,rhs| lhs^rhs, T::zero(), |x| x);
-}
+        define_math_group!(BitXorGroup<T: BitXor<Output = T>, Zero>, |lhs,rhs| lhs^rhs, T::zero(), |x| x);
+    }
 }
 pub use math_group_bitxor::*;
 
-#[codesnip::entry]
+#[codesnip::entry(include("MathGroup", "Monoid", "Semigroup"))]
+#[allow(unused_macros)]
 macro_rules! define_math_group {
     (@impl $group:ident<T: $($bounds:path),* $(,)?>, |$lhs:ident,$rhs:ident| $expr:expr, $identity:expr, |$x:ident| $neg:expr) => {
         impl<T: Clone + $($bounds+)*> Semigroup for $group<T> {
@@ -95,4 +97,5 @@ macro_rules! define_math_group {
     )*};
 }
 #[codesnip::entry("define_math_group")]
+#[allow(unused_imports)]
 pub(crate) use define_math_group;

@@ -67,26 +67,30 @@ impl_lower_bound!(i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize);
 #[codesnip::entry(include("BoundedAbove", "BoundedBelow"))]
 pub trait Bounded: BoundedAbove + BoundedBelow {}
 
+#[codesnip::entry(inline, "Reciprocal")]
+mod reciprocal {
 pub trait Reciprocal {
     type Output;
     fn reciprocal(self) -> Self::Output;
 }
 
 macro_rules! impl_reciprocal {
-    (impl Reciprocal for $($t:ty)*) => {$(
+        (impl Reciprocal, $one:expr, for $($t:ty)*) => {$(
         impl Reciprocal for $t {
             type Output = $t;
             fn reciprocal(self) -> Self::Output {
-                Self::one() / self
+                    $one / self
             }
         }
         impl<'a> Reciprocal for &'a $t {
             type Output = $t;
             fn reciprocal(self) -> Self::Output {
-                Self::one() / self
+                    $one / self
+                }
             }
-        }
-    )*};
-}
+        )*};
+    }
 
-impl_reciprocal!(impl Reciprocal for f32 f64);
+    impl_reciprocal!(impl Reciprocal, 1.0, for f32 f64);
+}
+pub use reciprocal::*;

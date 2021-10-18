@@ -32,7 +32,7 @@ mod modint_998244353 {
     }
 }
 
-#[codesnip::entry("ModInt")]
+#[codesnip::entry("ModInt", include("Modulo"))]
 pub trait ModInt {
     type Set;
     type Modulo: Modulo<Set = Self::Set>;
@@ -43,6 +43,7 @@ pub trait ModInt {
 }
 
 #[codesnip::entry(include("Modulo", "ModInt"))]
+#[allow(unused_macros)]
 macro_rules! define_modint {
     (@impl_ops_with_plain for $modint:ident<$t:ty> $($imp:ident, $fn:ident, $assign_imp:ident, $assign_fn:ident);* $(;)?) => {$(
         impl $imp<$t> for $modint {
@@ -277,6 +278,7 @@ macro_rules! define_modint {
     };
 }
 #[codesnip::entry("define_modint")]
+#[allow(unused_imports)]
 pub(crate) use define_modint;
 
 #[cfg(test)]
