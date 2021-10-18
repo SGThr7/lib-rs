@@ -1,3 +1,20 @@
+#[codesnip::entry]
+#[allow(unused_macros)]
+macro_rules! mat {
+    () => {
+        vec![]
+    };
+    ($e:expr; $n:expr) => {
+        vec![$e; $n]
+    };
+    ($e:expr; $nhead:expr $(, $ntail:expr)*) => {
+        vec![mat![$e; $($ntail),*]; $nhead]
+    };
+}
+#[codesnip::entry("mat")]
+#[allow(unused_imports)]
+pub(crate) use mat;
+
 #[codesnip::entry("chmax")]
 #[allow(unused_macros)]
 macro_rules! chmax {
@@ -23,6 +40,14 @@ pub(crate) use chmin;
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn mat() {
+        let t = mat![3; 3, 3];
+        assert_eq!(t.len(), 3);
+        assert!(t.iter().all(|v| v.len() == 3));
+        assert!(t.iter().all(|v| v.iter().all(|x| *x == 3)));
+    }
 
     #[test]
     fn chmax() {
