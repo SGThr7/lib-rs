@@ -1,8 +1,14 @@
-use crate::math::math_structs::monoid;
+use crate::math::math_structs::monoid::Monoid;
 
 #[codesnip::entry("BinaryIndexedTree", include("Monoid"))]
-pub mod binary_indexed_tree {
-    use super::monoid::Monoid;
+#[derive(Clone, PartialEq, Eq)]
+pub struct BinaryIndexedTree<T: Monoid> {
+    tree: Vec<T::Set>,
+}
+
+#[codesnip::entry("BinaryIndexedTree", include("Monoid"))]
+mod binary_indexed_tree {
+    use super::{BinaryIndexedTree, Monoid};
     use core::{
         fmt::Debug,
         iter::FusedIterator,
@@ -10,11 +16,6 @@ pub mod binary_indexed_tree {
         slice,
     };
     use std::vec;
-
-    #[derive(Clone, PartialEq, Eq)]
-    pub struct BinaryIndexedTree<T: Monoid> {
-        tree: Vec<T::Set>,
-    }
 
     impl<T: Monoid> BinaryIndexedTree<T> {
         pub fn new() -> Self {
