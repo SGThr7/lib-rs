@@ -19,35 +19,51 @@ pub trait MathGroup: Monoid {
     }
 }
 
-#[codesnip::entry("AddGroup")]
-pub use math_group_add::AddGroup;
-#[codesnip::entry("AddGroup", include("define_math_group", "Zero"))]
+#[codesnip::entry(inline, "AddGroup", include("define_math_group", "Zero"))]
 mod math_group_add {
+    #[codesnip::skip]
+    use super::*;
+
+    pub use math_group_add_impl::AddGroup;
+    mod math_group_add_impl {
+
     use super::{define_math_group, Zero};
     use core::ops::{Add, Neg};
 
     define_math_group!(AddGroup<T: Add<Output = T>, Zero, Neg<Output = T>>, |lhs,rhs| lhs+rhs, T::zero(), |x| -x);
 }
+}
+pub use math_group_add::*;
 
-#[codesnip::entry("MulGroup")]
-pub use math_group_mul::MulGroup;
-#[codesnip::entry("MulGroup", include("define_math_group", "One", "Reciprocal"))]
+#[codesnip::entry(inline, "MulGroup", include("define_math_group", "One", "Reciprocal"))]
 mod math_group_mul {
+    #[codesnip::skip]
+    use super::*;
+
+    pub use math_group_mul_impl::MulGroup;
+    mod math_group_mul_impl {
     use super::{define_math_group, One, Reciprocal};
     use core::ops::{Div, Mul};
 
     define_math_group!(MulGroup<T: Mul<Output = T>, One, Div<Output = T>, Reciprocal<Output = T>>, |lhs,rhs| lhs*rhs, T::one(), |x| x.reciprocal());
 }
+}
+pub use math_group_mul::*;
 
-#[codesnip::entry("BitXorGroup")]
-pub use math_group_bitxor::BitXorGroup;
-#[codesnip::entry("BitXorGroup", include("define_math_group", "Zero"))]
+#[codesnip::entry(inline, "BitXorGroup", include("define_math_group", "Zero"))]
 mod math_group_bitxor {
+    #[codesnip::skip]
+    use super::*;
+
+    pub use math_group_bitxor_impl::BitXorGroup;
+    mod math_group_bitxor_impl {
     use super::{define_math_group, Zero};
     use core::ops::BitXor;
 
     define_math_group!(BitXorGroup<T: BitXor<Output = T>, Zero>, |lhs,rhs| lhs^rhs, T::zero(), |x| x);
 }
+}
+pub use math_group_bitxor::*;
 
 #[codesnip::entry]
 macro_rules! define_math_group {
