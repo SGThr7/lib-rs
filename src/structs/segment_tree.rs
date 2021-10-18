@@ -119,7 +119,7 @@ mod segment_tree_impl {
     mod tests {
         use super::super::SegmentTree;
         use crate::math::math_structs::monoid::{
-            AddMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid, XorMonoid,
+            AddMonoid, BitXorMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid,
         };
         use core::{cmp::PartialEq, fmt::Debug};
 
@@ -153,7 +153,7 @@ mod segment_tree_impl {
             mul, MulMonoid
             max, MaxMonoid
             min, MinMonoid
-            xor, XorMonoid
+            xor, BitXorMonoid
         }
 
         fn check_segtree<M>(ans: &[M::Set], segtree: &SegmentTree<M>)

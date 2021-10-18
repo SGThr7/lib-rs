@@ -1,4 +1,4 @@
-use crate::math::math_structs::monoid::Monoid;
+use crate::math::math_structs::Monoid;
 
 #[codesnip::entry("BinaryIndexedTree", include("Monoid"))]
 #[derive(Clone, PartialEq, Eq)]
