@@ -15,6 +15,46 @@ macro_rules! mat {
 #[allow(unused_imports)]
 pub(crate) use mat;
 
+#[codesnip::entry]
+#[allow(unused_macros)]
+macro_rules! dir4 {
+    (($x:expr, $y:expr) in $range:expr) => {
+        vec![
+            ($x.wrapping_add(1), $y),
+            ($x, $y.wrapping_add(1)),
+            ($x.wrapping_sub(1), $y),
+            ($x, $y.wrapping_sub(1)),
+        ]
+        .into_iter()
+        .filter(|(x, y)| $range.contains(&x) && $range.contains(&y))
+    };
+}
+#[codesnip::entry("dir4")]
+#[allow(unused_imports)]
+pub(crate) use dir4;
+
+#[codesnip::entry]
+#[allow(unused_macros)]
+macro_rules! dir_around {
+    (@1dim $x:expr, $range:expr) => {
+        vec![($x as usize).wrapping_sub(1), $x, ($x as usize).wrapping_add(1)]
+            .into_iter()
+            .filter(|x| $range.contains(x))
+    };
+    (($x:expr, $y:expr) in ($rangex:expr, $rangey:expr)) => {
+        dir_around!(@1dim $x, $rangex)
+            .map(|x| core::iter::repeat(x).zip(dir_around!(@1dim $y, $rangey)).collect::<Vec<_>>())
+            .flatten()
+            .filter(|pos| pos != &($x, $y))
+    };
+    (($x:expr, $y:expr) in $range:expr) => {
+        dir_around!(($x, $y) in ($range, $range))
+    };
+}
+#[codesnip::entry("dir_around")]
+#[allow(unused_imports)]
+pub(crate) use dir_around;
+
 #[codesnip::entry("chmax")]
 #[allow(unused_macros)]
 macro_rules! chmax {
@@ -47,6 +87,31 @@ mod test {
         assert_eq!(t.len(), 3);
         assert!(t.iter().all(|v| v.len() == 3));
         assert!(t.iter().all(|v| v.iter().all(|x| *x == 3)));
+    }
+
+    #[test]
+    fn dir_around() {
+        assert_eq!(
+            vec![
+                (0, 0),
+                (0, 1),
+                (0, 2),
+                (1, 0),
+                (1, 2),
+                (2, 0),
+                (2, 1),
+                (2, 2)
+            ],
+            dir_around!((1, 1) in 0..10).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            vec![(1, 2), (2, 1), (2, 2)],
+            dir_around!((1, 1) in 1..10).collect::<Vec<_>>()
+        );
+        assert_eq!(
+            vec![(0, 1), (0, 2), (1, 2), (2, 1), (2, 2)],
+            dir_around!((1, 1) in (0..10, 1..10)).collect::<Vec<_>>()
+        );
     }
 
     #[test]
