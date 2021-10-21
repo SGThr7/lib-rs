@@ -10,7 +10,10 @@ pub trait Bisect<T> {
     fn lower_bound_by<'a, F>(&'a self, f: F) -> usize
     where
         T: 'a,
-        F: FnMut(&'a T) -> core::cmp::Ordering;
+        F: FnMut(&'a T) -> core::cmp::Ordering,
+    {
+        self.find_range_by(f).start
+    }
 
     fn upper_bound(&self, x: &T) -> usize
     where
@@ -22,7 +25,10 @@ pub trait Bisect<T> {
     fn upper_bound_by<'a, F>(&'a self, f: F) -> usize
     where
         T: 'a,
-        F: FnMut(&'a T) -> core::cmp::Ordering;
+        F: FnMut(&'a T) -> core::cmp::Ordering,
+    {
+        self.find_range_by(f).end
+    }
 
     fn find_range(&self, x: &T) -> core::ops::Range<usize>
     where
@@ -36,7 +42,8 @@ pub trait Bisect<T> {
         T: 'a,
         F: FnMut(&'a T) -> core::cmp::Ordering;
 
-    /// see slice::partition_point
+    /// See [slice::partition_point](https://doc.rust-lang.org/std/primitive.slice.html#method.partition_point).
+    /// `slice::partition_point` requires version 1.52 or upper.
     fn partition_point<'a, F>(&'a self, mut f: F) -> usize
     where
         T: 'a,
@@ -52,46 +59,8 @@ pub trait Bisect<T> {
     }
 }
 
-#[codesnip::entry("Bisect")]
+#[codesnip::entry("BisectVec", include("Bisect"))]
 impl<T> Bisect<T> for [T] {
-    fn lower_bound_by<'a, F>(&'a self, mut f: F) -> usize
-    where
-        T: 'a,
-        F: FnMut(&'a T) -> core::cmp::Ordering,
-    {
-        let mut l = 0;
-        let mut r = self.len();
-        use core::cmp::Ordering::{Equal, Greater, Less};
-        while l < r {
-            let mid = (r - l) / 2 + l;
-            let cmp = f(unsafe { self.get_unchecked(mid) });
-            match cmp {
-                Less => l = mid + 1,
-                Equal | Greater => r = mid,
-            }
-        }
-        l
-    }
-
-    fn upper_bound_by<'a, F>(&'a self, mut f: F) -> usize
-    where
-        T: 'a,
-        F: FnMut(&'a T) -> core::cmp::Ordering,
-    {
-        let mut l = 0;
-        let mut r = self.len();
-        use core::cmp::Ordering::{Equal, Greater, Less};
-        while l < r {
-            let mid = (r - l) / 2 + l;
-            let cmp = f(unsafe { self.get_unchecked(mid) });
-            match cmp {
-                Less | Equal => l = mid + 1,
-                Greater => r = mid,
-            }
-        }
-        r
-    }
-
     fn find_range_by<'a, F>(&'a self, mut f: F) -> core::ops::Range<usize>
     where
         T: 'a,
