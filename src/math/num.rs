@@ -69,22 +69,22 @@ pub trait Bounded: BoundedAbove + BoundedBelow {}
 
 #[codesnip::entry(inline, "Reciprocal")]
 mod reciprocal {
-pub trait Reciprocal {
-    type Output;
-    fn reciprocal(self) -> Self::Output;
-}
+    pub trait Reciprocal {
+        type Output;
+        fn reciprocal(self) -> Self::Output;
+    }
 
-macro_rules! impl_reciprocal {
+    macro_rules! impl_reciprocal {
         (impl Reciprocal, $one:expr, for $($t:ty)*) => {$(
-        impl Reciprocal for $t {
-            type Output = $t;
-            fn reciprocal(self) -> Self::Output {
+            impl Reciprocal for $t {
+                type Output = $t;
+                fn reciprocal(self) -> Self::Output {
                     $one / self
+                }
             }
-        }
-        impl<'a> Reciprocal for &'a $t {
-            type Output = $t;
-            fn reciprocal(self) -> Self::Output {
+            impl<'a> Reciprocal for &'a $t {
+                type Output = $t;
+                fn reciprocal(self) -> Self::Output {
                     $one / self
                 }
             }
