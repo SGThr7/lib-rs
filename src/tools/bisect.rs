@@ -111,7 +111,7 @@ mod test_bisect {
                 .iter()
                 .rposition(|&x| x == i)
                 .and_then(|x| Some(x + 1))
-                .unwrap_or(v.binary_search(&i).err().unwrap());
+                .unwrap_or_else(|| v.binary_search(&i).err().unwrap());
             assert_eq!(l, v.lower_bound(&i), "lower_bound, i: {}", i);
             assert_eq!(r, v.upper_bound(&i), "upper_bound, i: {}", i);
             assert_eq!(l..r, v.find_range(&i), "find_range, i: {}", i);
