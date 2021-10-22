@@ -3,6 +3,13 @@ pub trait GcdLcm<Rhs = Self> {
     type Output;
     fn gcd(self, other: Rhs) -> Self::Output;
     fn lcm(self, other: Rhs) -> Self::Output;
+    fn gcd_lcm(self, other: Rhs) -> (Self::Output, Self::Output)
+    where
+        Self: Sized + Clone,
+        Rhs: Clone,
+    {
+        (self.clone().gcd(other.clone()), self.lcm(other))
+    }
 }
 
 #[codesnip::entry("GcdLcm")]
@@ -48,6 +55,12 @@ mod gcd_lcm_impl {
                 fn lcm(self, other: Self) -> Self {
                     let gcd = self.gcd(other);
                     self / gcd * other
+                }
+
+                fn gcd_lcm(self, other: Self) -> (Self::Output, Self::Output){
+                    let gcd = self.clone().gcd(other.clone());
+                    let lcm = self / gcd * other;
+                    (gcd, lcm)
                 }
             }
             impl_common_num! { @forward_ref $t }
