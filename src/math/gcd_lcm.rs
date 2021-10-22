@@ -37,13 +37,12 @@ mod common_num_impl {
                     } else {
                         (other, self)
                     };
-                    let mut r = a.rem_euclid(b);
-                    while r > $zero {
+                    while b != $zero {
+                        let r = a.rem_euclid(b);
                         a = b;
                         b = r;
-                        r = a.rem_euclid(b);
                     }
-                    a.div_euclid(b)
+                    a
                 }
 
                 fn lcm(self, other: Self) -> Self {
