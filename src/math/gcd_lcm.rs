@@ -1,34 +1,34 @@
-#[codesnip::entry("GCD_LCM")]
-pub trait CommonNum<Rhs = Self> {
+#[codesnip::entry]
+pub trait GcdLcm<Rhs = Self> {
     type Output;
     fn gcd(self, other: Rhs) -> Self::Output;
     fn lcm(self, other: Rhs) -> Self::Output;
 }
 
-#[codesnip::entry("GCD_LCM")]
-mod common_num_impl {
-    use super::CommonNum;
+#[codesnip::entry("GcdLcm")]
+mod gcd_lcm_impl {
+    use super::GcdLcm;
 
     macro_rules! impl_common_num {
         (@forward_ref $t:ty) => {
-            impl CommonNum<&$t> for $t {
-                type Output = <$t as CommonNum>::Output;
+            impl GcdLcm<&$t> for $t {
+                type Output = <$t as GcdLcm>::Output;
                 fn gcd(self, other: &$t) -> Self::Output { self.gcd(*other) }
                 fn lcm(self, other: &$t) -> Self::Output { self.lcm(*other) }
             }
-            impl CommonNum<$t> for &$t {
-                type Output = <$t as CommonNum>::Output;
+            impl GcdLcm<$t> for &$t {
+                type Output = <$t as GcdLcm>::Output;
                 fn gcd(self, other: $t) -> Self::Output { self.clone().gcd(other) }
                 fn lcm(self, other: $t) -> Self::Output { self.clone().lcm(other) }
             }
-            impl CommonNum<&$t> for &$t {
-                type Output = <$t as CommonNum>::Output;
+            impl GcdLcm<&$t> for &$t {
+                type Output = <$t as GcdLcm>::Output;
                 fn gcd(self, other: &$t) -> Self::Output { self.clone().gcd(other.clone()) }
                 fn lcm(self, other: &$t) -> Self::Output { self.clone().lcm(other.clone()) }
             }
         };
         ($zero:expr, for $($t:ty)*) => {$(
-            impl CommonNum for $t {
+            impl GcdLcm for $t {
                 type Output = $t;
 
                 fn gcd(self, other: Self) -> Self {
