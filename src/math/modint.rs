@@ -38,8 +38,8 @@ pub trait ModInt {
     type Modulo: Modulo<Set = Self::Set>;
     fn new(x: Self::Set) -> Self;
     fn get(&self) -> &Self::Set;
-    fn pow(&self, exp: u32) -> Self;
-    fn inverse(&self) -> Self;
+    fn pow(self, exp: u32) -> Self;
+    fn inverse(self) -> Self;
 }
 
 #[codesnip::entry(include("Modulo", "ModInt"))]
@@ -144,23 +144,30 @@ macro_rules! define_modint {
                 &self.0
             }
 
-            fn pow(&self, mut exp: u32) -> Self {
-                let mut x = self.clone();
-                let mut res = 1.into();
-                while exp > 1 {
-                    if exp & 1 == 1 {
-                        res *= x;
+            fn pow(self, mut exp: u32) -> Self {
+                if exp == 0 {
+                    return 1.into();
+                } else {
+                    let mut base = self;
+                    let mut acc: Self = 1.into();
+
+                    while exp > 1 {
+                        if (exp & 1) == 1 {
+                            acc *= base;
+                        }
+                        exp /= 2;
+                        base *= base;
                     }
-                    x *= x;
-                    exp >>= 1;
+
+                    // since exp!=0, finally the exp must be 1.
+                    // Deal with the final bit of the exponent separately, since
+                    // squaring the base afterwards is not necessary and may cause a
+                    // needless overflow.
+                    acc * base
                 }
-                if exp == 1 {
-                    res *= x;
-                }
-                res
             }
 
-            fn inverse(&self) -> Self {
+            fn inverse(self) -> Self {
                 self.pow((<Self as ModInt>::Modulo::MOD - 2) as u32)
             }
         }
