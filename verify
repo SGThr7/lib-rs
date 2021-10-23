@@ -1,2 +1,0 @@
-# /bin/bash
-cargo codesnip --use-cache="./target/codesnip/codesnip-cache.bin" verify --verbose
