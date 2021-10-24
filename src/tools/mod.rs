@@ -1,3 +1,4 @@
+pub mod abs_pow;
 pub mod abs_sub;
 pub mod bisect;
 pub mod macros;
