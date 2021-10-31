@@ -86,7 +86,7 @@ mod square_matrix_impl {
             mat
         }
 
-        pub fn pow(self, mut exp: u32) -> Self
+        pub fn pow(self, mut exp: usize) -> Self
         where
             T: Clone + Zero + One + Mul<Output = T> + Add<Output = T>,
         {
@@ -547,7 +547,7 @@ mod square_matrix_impl {
             ];
             for (i, ans) in ans.into_iter().enumerate() {
                 let ans = to_mat(ans);
-                assert_eq!(a.clone().pow(i as u32), ans, "i={}", i);
+                assert_eq!(a.clone().pow(i), ans, "i={}", i);
             }
         }
 
@@ -607,7 +607,7 @@ mod square_matrix_impl {
             ];
             for (i, ans) in ans.into_iter().enumerate() {
                 let ans = to_mat(ans.into_iter().map(|x| x.into()).collect());
-                assert_eq!(a.clone().pow(i as u32), ans, "i={}", i);
+                assert_eq!(a.clone().pow(i), ans, "i={}", i);
             }
         }
     }

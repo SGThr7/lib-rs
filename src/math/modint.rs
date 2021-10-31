@@ -57,7 +57,7 @@ mod modint_impl {
     where
         M: Modulo<Set = Set> + Clone,
     {
-        pub fn pow(self, mut exp: u32) -> Self {
+        pub fn pow(self, mut exp: usize) -> Self {
             if exp == 0 {
                 Self::one()
             } else {
@@ -77,7 +77,7 @@ mod modint_impl {
         }
 
         pub fn recip(self) -> Self {
-            self.pow((M::MOD - 2) as u32)
+            self.pow(M::MOD - 2)
         }
     }
 
@@ -411,7 +411,7 @@ mod modint_impl {
             for (i, v) in ans.into_iter().enumerate() {
                 let a = MI::new(i);
                 for (b, ans) in v.into_iter().enumerate() {
-                    assert_eq!(a.pow(b as u32), ans, "{}^{}", i, b);
+                    assert_eq!(a.pow(b), ans, "{}^{}", i, b);
                 }
             }
         }
