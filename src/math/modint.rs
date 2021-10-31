@@ -1,3 +1,5 @@
+use crate::math::num::{One, Zero};
+
 pub mod modulo;
 pub use modulo::{Modulo, Modulo1e9_7, Modulo998244353};
 
@@ -13,9 +15,9 @@ pub type ModInt998244353 = ModInt<Modulo998244353>;
 #[codesnip::entry("ModInt")]
 pub use modint_impl::ModInt;
 
-#[codesnip::entry("ModInt", include("Modulo"))]
+#[codesnip::entry("ModInt", include("Modulo", "One", "Zero"))]
 mod modint_impl {
-    use super::Modulo;
+    use super::{Modulo, One, Zero};
     use core::{
         cmp::Ordering,
         fmt,
@@ -76,6 +78,18 @@ mod modint_impl {
 
         pub fn recip(self) -> Self {
             self.pow((M::MOD - 2) as u32)
+        }
+    }
+
+    impl<M> Zero for ModInt<M> {
+        fn zero() -> Self {
+            Self::zero()
+        }
+    }
+
+    impl<M: Modulo<Set = usize>> One for ModInt<M> {
+        fn one() -> Self {
+            Self::one()
         }
     }
 
