@@ -3,15 +3,8 @@
 macro_rules! impl_identity {
     (impl $imp:ident, $method:ident, $e:expr; for $($t:ty)*) => {$(
         impl $imp for $t {
-            fn $method() -> Self {
-                $e
-            }
-        }
-
-        impl<'a> $imp for &'a $t {
-            fn $method() -> Self {
-                &$e
-            }
+            #[inline]
+            fn $method() -> Self { $e }
         }
     )*};
 }
