@@ -302,13 +302,13 @@ mod modint_impl {
         (for $($trait:ident)*) => {$(
             impl<M> fmt::$trait for ModInt<M> {
                 fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                    self.0.fmt(f)
+                    fmt::$trait::fmt(&self.0, f)
                 }
             }
         )*};
     }
 
-    impl_fmt! {for Debug Display Binary Octal LowerHex UpperHex LowerExp UpperExp }
+    impl_fmt! {for Debug Display Binary Octal LowerHex UpperHex }
 
     impl<M: Modulo<Set = Set>> FromStr for ModInt<M> {
         type Err = <Set as FromStr>::Err;
