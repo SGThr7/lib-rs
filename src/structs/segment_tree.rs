@@ -114,16 +114,17 @@ mod segment_tree_impl {
             core::ops::Index::index(&self.tree[self.n - 1..], index)
         }
     }
+}
 
-    #[cfg(test)]
-    mod tests {
-        use super::super::SegmentTree;
-        use crate::math::math_structs::monoid::{
-            AddMonoid, BitXorMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid,
-        };
-        use core::{cmp::PartialEq, fmt::Debug};
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::math::math_structs::monoid::{
+        AddMonoid, BitXorMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid,
+    };
+    use core::{cmp::PartialEq, fmt::Debug};
 
-        macro_rules! test_segtree {
+    macro_rules! test_segtree {
             ($($name:ident, $monoid:ident)*) => {$(
                 #[test]
                 fn $name() {
@@ -148,38 +149,37 @@ mod segment_tree_impl {
             )*};
         }
 
-        test_segtree! {
-            add, AddMonoid
-            mul, MulMonoid
-            max, MaxMonoid
-            min, MinMonoid
-            xor, BitXorMonoid
+    test_segtree! {
+        add, AddMonoid
+        mul, MulMonoid
+        max, MaxMonoid
+        min, MinMonoid
+        xor, BitXorMonoid
+    }
+
+    fn check_segtree<M>(ans: &[M::Set], segtree: &SegmentTree<M>)
+    where
+        M: Monoid,
+        M::Set: Debug + PartialEq,
+    {
+        let n = ans.len();
+        // get for each
+        for i in 0..n {
+            assert_eq!(ans[i], *(segtree.get(i)).unwrap());
         }
 
-        fn check_segtree<M>(ans: &[M::Set], segtree: &SegmentTree<M>)
-        where
-            M: Monoid,
-            M::Set: Debug + PartialEq,
-        {
-            let n = ans.len();
-            // get for each
-            for i in 0..n {
-                assert_eq!(ans[i], *(segtree.get(i)).unwrap());
-            }
-
-            // query for each range
-            for i in 0..=n {
-                for k in i..=n {
-                    assert_eq!(
-                        ans[i..k]
-                            .iter()
-                            .fold(M::identity(), |a, b| M::operate(&a, &b)),
-                        segtree.query(i..k),
-                        "range: `{}..{}`",
-                        i,
-                        k
-                    );
-                }
+        // query for each range
+        for i in 0..=n {
+            for k in i..=n {
+                assert_eq!(
+                    ans[i..k]
+                        .iter()
+                        .fold(M::identity(), |a, b| M::operate(&a, &b)),
+                    segtree.query(i..k),
+                    "range: `{}..{}`",
+                    i,
+                    k
+                );
             }
         }
     }

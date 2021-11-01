@@ -173,41 +173,41 @@ mod modint_factmap_impl {
                 .finish()
         }
     }
+}
 
-    #[cfg(test)]
-    mod tests {
-        use super::{ModIntFactMap, Modulo};
+#[cfg(test)]
+mod tests {
+    use super::{ModIntFactMap, Modulo};
 
-        #[derive(Clone, Copy, Debug)]
-        enum ModuloTest {}
-        impl Modulo for ModuloTest {
-            type Set = usize;
-            const MOD: Self::Set = 13;
-        }
-        type Map = ModIntFactMap<ModuloTest>;
+    #[derive(Clone, Copy, Debug)]
+    enum ModuloTest {}
+    impl Modulo for ModuloTest {
+        type Set = usize;
+        const MOD: Self::Set = 13;
+    }
+    type Map = ModIntFactMap<ModuloTest>;
 
-        fn fact(x: usize) -> usize {
-            (1..=x).product()
-        }
+    fn fact(x: usize) -> usize {
+        (1..=x).product()
+    }
 
-        fn comb(n: usize, k: usize) -> usize {
-            fact(n) / fact(k) / fact(n - k)
-        }
+    fn comb(n: usize, k: usize) -> usize {
+        fact(n) / fact(k) / fact(n - k)
+    }
 
-        #[test]
-        fn combination() {
-            let max = 11;
-            let map = Map::new(max);
+    #[test]
+    fn combination() {
+        let max = 11;
+        let map = Map::new(max);
 
-            for i in 0..=max {
-                assert_eq!(
-                    map.get_combination(max, i).unwrap(),
-                    comb(max, i) % ModuloTest::MOD,
-                    "{}C{}",
-                    max,
-                    i
-                );
-            }
+        for i in 0..=max {
+            assert_eq!(
+                map.get_combination(max, i).unwrap(),
+                comb(max, i) % ModuloTest::MOD,
+                "{}C{}",
+                max,
+                i
+            );
         }
     }
 }

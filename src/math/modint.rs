@@ -317,129 +317,129 @@ mod modint_impl {
             Ok(s.parse::<Set>()?.into())
         }
     }
+}
 
-    #[cfg(test)]
-    mod tests {
-        use super::ModInt;
-        use super::Modulo;
+#[cfg(test)]
+mod tests {
+    use super::ModInt;
+    use super::Modulo;
 
-        #[derive(Clone, Copy)]
-        enum Modulo7 {}
-        impl Modulo for Modulo7 {
-            type Set = usize;
-            const MOD: Self::Set = 7;
-        }
+    #[derive(Clone, Copy)]
+    enum Modulo7 {}
+    impl Modulo for Modulo7 {
+        type Set = usize;
+        const MOD: Self::Set = 7;
+    }
 
-        type MI = ModInt<Modulo7>;
+    type MI = ModInt<Modulo7>;
 
-        #[test]
-        fn add() {
-            let ans = vec![
-                vec![0, 1, 2, 3, 4, 5, 6, 0, 1],
-                vec![1, 2, 3, 4, 5, 6, 0, 1, 2],
-                vec![2, 3, 4, 5, 6, 0, 1, 2, 3],
-                vec![3, 4, 5, 6, 0, 1, 2, 3, 4],
-                vec![4, 5, 6, 0, 1, 2, 3, 4, 5],
-                vec![5, 6, 0, 1, 2, 3, 4, 5, 6],
-                vec![6, 0, 1, 2, 3, 4, 5, 6, 0],
-            ];
-            for (i, v) in ans.into_iter().enumerate() {
-                let a = MI::new(i);
-                for (b, ans) in v.into_iter().enumerate() {
-                    assert_eq!(a + b, ans, "{} + {}", i, b);
-                }
+    #[test]
+    fn add() {
+        let ans = vec![
+            vec![0, 1, 2, 3, 4, 5, 6, 0, 1],
+            vec![1, 2, 3, 4, 5, 6, 0, 1, 2],
+            vec![2, 3, 4, 5, 6, 0, 1, 2, 3],
+            vec![3, 4, 5, 6, 0, 1, 2, 3, 4],
+            vec![4, 5, 6, 0, 1, 2, 3, 4, 5],
+            vec![5, 6, 0, 1, 2, 3, 4, 5, 6],
+            vec![6, 0, 1, 2, 3, 4, 5, 6, 0],
+        ];
+        for (i, v) in ans.into_iter().enumerate() {
+            let a = MI::new(i);
+            for (b, ans) in v.into_iter().enumerate() {
+                assert_eq!(a + b, ans, "{} + {}", i, b);
             }
         }
+    }
 
-        #[test]
-        fn sub() {
-            let ans = vec![
-                vec![0, 6, 5, 4, 3, 2, 1, 0, 6],
-                vec![1, 0, 6, 5, 4, 3, 2, 1, 0],
-                vec![2, 1, 0, 6, 5, 4, 3, 2, 1],
-                vec![3, 2, 1, 0, 6, 5, 4, 3, 2],
-                vec![4, 3, 2, 1, 0, 6, 5, 4, 3],
-                vec![5, 4, 3, 2, 1, 0, 6, 5, 4],
-                vec![6, 5, 4, 3, 2, 1, 0, 6, 5],
-            ];
-            for (i, v) in ans.into_iter().enumerate() {
-                let a = MI::new(i);
-                for (b, ans) in v.into_iter().enumerate() {
-                    assert_eq!(a - b, ans, "{} - {}", i, b);
-                }
+    #[test]
+    fn sub() {
+        let ans = vec![
+            vec![0, 6, 5, 4, 3, 2, 1, 0, 6],
+            vec![1, 0, 6, 5, 4, 3, 2, 1, 0],
+            vec![2, 1, 0, 6, 5, 4, 3, 2, 1],
+            vec![3, 2, 1, 0, 6, 5, 4, 3, 2],
+            vec![4, 3, 2, 1, 0, 6, 5, 4, 3],
+            vec![5, 4, 3, 2, 1, 0, 6, 5, 4],
+            vec![6, 5, 4, 3, 2, 1, 0, 6, 5],
+        ];
+        for (i, v) in ans.into_iter().enumerate() {
+            let a = MI::new(i);
+            for (b, ans) in v.into_iter().enumerate() {
+                assert_eq!(a - b, ans, "{} - {}", i, b);
             }
         }
+    }
 
-        #[test]
-        fn neg() {
-            for (i, ans) in vec![0, 6, 5, 4, 3, 2, 1, 0, 6].into_iter().enumerate() {
-                let a = MI::new(i);
-                assert_eq!(-a, ans, "-{}", i);
+    #[test]
+    fn neg() {
+        for (i, ans) in vec![0, 6, 5, 4, 3, 2, 1, 0, 6].into_iter().enumerate() {
+            let a = MI::new(i);
+            assert_eq!(-a, ans, "-{}", i);
+        }
+    }
+
+    #[test]
+    fn mul() {
+        let ans = vec![
+            vec![0, 0, 0],
+            vec![0, 1, 2, 3, 4, 5, 6, 0, 1],
+            vec![0, 2, 4, 6, 1, 3, 5, 0, 2],
+            vec![0, 3, 6, 2, 5, 1, 4, 0, 3],
+            vec![0, 4, 1, 5, 2, 6, 3, 0, 4],
+            vec![0, 5, 3, 1, 6, 4, 2, 0, 5],
+            vec![0, 6, 5, 4, 3, 2, 1, 0, 6],
+        ];
+        for (i, v) in ans.into_iter().enumerate() {
+            let a = MI::new(i);
+            for (b, ans) in v.into_iter().enumerate() {
+                assert_eq!(a * b, ans, "{} * {}", i, b);
             }
         }
+    }
 
-        #[test]
-        fn mul() {
-            let ans = vec![
-                vec![0, 0, 0],
-                vec![0, 1, 2, 3, 4, 5, 6, 0, 1],
-                vec![0, 2, 4, 6, 1, 3, 5, 0, 2],
-                vec![0, 3, 6, 2, 5, 1, 4, 0, 3],
-                vec![0, 4, 1, 5, 2, 6, 3, 0, 4],
-                vec![0, 5, 3, 1, 6, 4, 2, 0, 5],
-                vec![0, 6, 5, 4, 3, 2, 1, 0, 6],
-            ];
-            for (i, v) in ans.into_iter().enumerate() {
-                let a = MI::new(i);
-                for (b, ans) in v.into_iter().enumerate() {
-                    assert_eq!(a * b, ans, "{} * {}", i, b);
-                }
+    #[test]
+    fn pow() {
+        let ans = vec![
+            vec![1, 0, 0],
+            vec![1, 1, 1],
+            vec![1, 2, 4, 1, 2, 4, 1, 2],
+            vec![1, 3, 2, 6, 4, 5, 1, 3],
+            vec![1, 4, 2, 1, 4, 2, 1, 4],
+            vec![1, 5, 4, 6, 2, 3, 1, 5],
+            vec![1, 6, 1, 6, 1, 6, 1, 6],
+        ];
+        for (i, v) in ans.into_iter().enumerate() {
+            let a = MI::new(i);
+            for (b, ans) in v.into_iter().enumerate() {
+                assert_eq!(a.pow(b), ans, "{}^{}", i, b);
             }
         }
+    }
 
-        #[test]
-        fn pow() {
-            let ans = vec![
-                vec![1, 0, 0],
-                vec![1, 1, 1],
-                vec![1, 2, 4, 1, 2, 4, 1, 2],
-                vec![1, 3, 2, 6, 4, 5, 1, 3],
-                vec![1, 4, 2, 1, 4, 2, 1, 4],
-                vec![1, 5, 4, 6, 2, 3, 1, 5],
-                vec![1, 6, 1, 6, 1, 6, 1, 6],
-            ];
-            for (i, v) in ans.into_iter().enumerate() {
-                let a = MI::new(i);
-                for (b, ans) in v.into_iter().enumerate() {
-                    assert_eq!(a.pow(b), ans, "{}^{}", i, b);
-                }
-            }
+    #[test]
+    fn recip() {
+        for (i, ans) in vec![0, 1, 4, 5, 2, 3, 6, 0, 1].into_iter().enumerate() {
+            let a = MI::new(i);
+            assert_eq!(a.recip(), ans, "1 / {}", i);
         }
+    }
 
-        #[test]
-        fn recip() {
-            for (i, ans) in vec![0, 1, 4, 5, 2, 3, 6, 0, 1].into_iter().enumerate() {
-                let a = MI::new(i);
-                assert_eq!(a.recip(), ans, "1 / {}", i);
-            }
-        }
-
-        #[test]
-        fn div() {
-            let ans = vec![
-                vec![0, 0, 0],
-                vec![0, 1, 4, 5, 2, 3, 6, 0, 1],
-                vec![0, 2, 1, 3, 4, 6, 5, 0, 2],
-                vec![0, 3, 5, 1, 6, 2, 4, 0, 3],
-                vec![0, 4, 2, 6, 1, 5, 3, 0, 4],
-                vec![0, 5, 6, 4, 3, 1, 2, 0, 5],
-                vec![0, 6, 3, 2, 5, 4, 1, 0, 6],
-            ];
-            for (i, v) in ans.into_iter().enumerate() {
-                let a = MI::new(i);
-                for (b, ans) in v.into_iter().enumerate() {
-                    assert_eq!(a / b, ans, "{} / {}", i, b);
-                }
+    #[test]
+    fn div() {
+        let ans = vec![
+            vec![0, 0, 0],
+            vec![0, 1, 4, 5, 2, 3, 6, 0, 1],
+            vec![0, 2, 1, 3, 4, 6, 5, 0, 2],
+            vec![0, 3, 5, 1, 6, 2, 4, 0, 3],
+            vec![0, 4, 2, 6, 1, 5, 3, 0, 4],
+            vec![0, 5, 6, 4, 3, 1, 2, 0, 5],
+            vec![0, 6, 3, 2, 5, 4, 1, 0, 6],
+        ];
+        for (i, v) in ans.into_iter().enumerate() {
+            let a = MI::new(i);
+            for (b, ans) in v.into_iter().enumerate() {
+                assert_eq!(a / b, ans, "{} / {}", i, b);
             }
         }
     }

@@ -274,76 +274,77 @@ mod binary_indexed_tree {
     impl<'a, T: Monoid> FusedIterator for Iter<'a, T> {}
 
     #[cfg(test)]
-    mod tests {
-        use super::*;
-        use crate::math::math_structs::monoid::AddMonoid;
-        type BITree<T> = BinaryIndexedTree<AddMonoid<T>>;
-
-        #[test]
-        fn debug() {
-            let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
-            // [1, 3, 6, 10, 15, 21, 28, 36, 45]
-            println!("{:?}", bit);
+    #[test]
+    fn lsb_test() {
+        for i in 1..(1e7 as usize) {
+            let t = super::binary_indexed_tree::lsb(i);
+            assert_eq!(i.trailing_zeros(), t.trailing_zeros());
+            assert_eq!(1, t.count_ones());
         }
+    }
+}
 
-        #[test]
-        fn lsb() {
-            for i in 1..(1e7 as usize) {
-                let t = super::lsb(i);
-                assert_eq!(i.trailing_zeros(), t.trailing_zeros());
-                assert_eq!(1, t.count_ones());
-            }
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::math::math_structs::monoid::AddMonoid;
+    type BITree<T> = BinaryIndexedTree<AddMonoid<T>>;
 
-        #[test]
-        fn from() {
-            let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
-            assert_eq!(vec![1, 3, 3, 10, 5, 11, 7, 36, 9], bit.tree);
-        }
+    #[test]
+    fn debug() {
+        let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        // [1, 3, 6, 10, 15, 21, 28, 36, 45]
+        println!("{:?}", bit);
+    }
 
-        #[test]
-        fn get() {
-            let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
-            assert_eq!(
-                vec![0, 1, 3, 6, 10, 15, 21, 28, 36, 45],
-                (0..=bit.len())
-                    .map(|i| bit.get(..i).unwrap())
-                    .collect::<Vec<_>>()
-            );
-        }
+    #[test]
+    fn from() {
+        let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        assert_eq!(vec![1, 3, 3, 10, 5, 11, 7, 36, 9], bit.tree);
+    }
 
-        #[test]
-        fn into_iter() {
-            let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
-            assert_eq!(
-                vec![1, 3, 6, 10, 15, 21, 28, 36, 45],
-                bit.into_iter().collect::<Vec<_>>()
-            );
-        }
+    #[test]
+    fn get() {
+        let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        assert_eq!(
+            vec![0, 1, 3, 6, 10, 15, 21, 28, 36, 45],
+            (0..=bit.len())
+                .map(|i| bit.get(..i).unwrap())
+                .collect::<Vec<_>>()
+        );
+    }
 
-        #[test]
-        fn iter() {
-            let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
-            assert_eq!(
-                vec![1, 3, 6, 10, 15, 21, 28, 36, 45],
-                bit.iter().collect::<Vec<_>>()
-            );
-        }
+    #[test]
+    fn into_iter() {
+        let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        assert_eq!(
+            vec![1, 3, 6, 10, 15, 21, 28, 36, 45],
+            bit.into_iter().collect::<Vec<_>>()
+        );
+    }
 
-        #[test]
-        fn lower_bound() {
-            let t = vec![1, 2, 3, 4, 5, 6, 7, 8, 9];
-            let ans = {
-                vec![0]
-                    .into_iter()
-                    .chain(t.iter().enumerate().map(|(i, &x)| vec![i; x]).flatten())
-                    .chain(vec![t.len(); 2])
-                    .collect::<Vec<_>>()
-            };
-            let bit = BITree::from(t);
-            for (i, ans) in ans.into_iter().enumerate() {
-                assert_eq!(ans, bit.lower_bound(i), "i={}", i);
-            }
+    #[test]
+    fn iter() {
+        let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        assert_eq!(
+            vec![1, 3, 6, 10, 15, 21, 28, 36, 45],
+            bit.iter().collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn lower_bound() {
+        let t = vec![1, 2, 3, 4, 5, 6, 7, 8, 9];
+        let ans = {
+            vec![0]
+                .into_iter()
+                .chain(t.iter().enumerate().map(|(i, &x)| vec![i; x]).flatten())
+                .chain(vec![t.len(); 2])
+                .collect::<Vec<_>>()
+        };
+        let bit = BITree::from(t);
+        for (i, ans) in ans.into_iter().enumerate() {
+            assert_eq!(ans, bit.lower_bound(i), "i={}", i);
         }
     }
 }

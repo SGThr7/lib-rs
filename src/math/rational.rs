@@ -417,37 +417,37 @@ mod rational_impl {
             iter.fold(Self::one(), |a, b| a * b)
         }
     }
+}
 
-    #[cfg(test)]
-    mod tests {
-        use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-        #[test]
-        fn add() {
-            let a: Rational = (7, 6).into();
-            let b: Rational = (7, 4).into();
-            assert_eq!((35, 12), a + b);
-        }
+    #[test]
+    fn add() {
+        let a: Rational = (7, 6).into();
+        let b: Rational = (7, 4).into();
+        assert_eq!((35, 12), a + b);
+    }
 
-        #[test]
-        fn sub() {
-            let a: Rational = (7, 6).into();
-            let b: Rational = (7, 4).into();
-            assert_eq!((-7, 12), a - b);
-        }
+    #[test]
+    fn sub() {
+        let a: Rational = (7, 6).into();
+        let b: Rational = (7, 4).into();
+        assert_eq!((-7, 12), a - b);
+    }
 
-        #[test]
-        fn mul() {
-            let a: Rational = (7, 6).into();
-            let b: Rational = (7, 4).into();
-            assert_eq!((49, 24), a * b);
-        }
+    #[test]
+    fn mul() {
+        let a: Rational = (7, 6).into();
+        let b: Rational = (7, 4).into();
+        assert_eq!((49, 24), a * b);
+    }
 
-        #[test]
-        fn div() {
-            let a: Rational = (7, 6).into();
-            let b: Rational = (7, 4).into();
-            assert_eq!((2, 3), a / b);
-        }
+    #[test]
+    fn div() {
+        let a: Rational = (7, 6).into();
+        let b: Rational = (7, 4).into();
+        assert_eq!((2, 3), a / b);
     }
 }
