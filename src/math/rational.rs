@@ -1,17 +1,11 @@
 use crate::math::gcd_lcm::GcdLcm;
 
-/// The rational number type.
-#[codesnip::entry]
-#[derive(Clone, Copy, Hash)]
-pub struct Rational {
-    minus: bool,
-    numerator: rational_impl::RationalUnit,
-    denominator: rational_impl::RationalUnit,
-}
+#[codesnip::entry("Rational")]
+pub use rational_impl::Rational;
 
 #[codesnip::entry("Rational", include("GcdLcm"))]
 mod rational_impl {
-    use super::{GcdLcm, Rational};
+    use super::GcdLcm;
     use core::{
         cmp::Ordering::{self, Equal, Greater, Less},
         fmt::{Debug, Display},
@@ -19,7 +13,15 @@ mod rational_impl {
         ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
     };
 
-    pub(super) type RationalUnit = usize;
+    type RationalUnit = usize;
+
+    /// The rational number type.
+    #[derive(Clone, Copy, Hash)]
+    pub struct Rational {
+        minus: bool,
+        numerator: RationalUnit,
+        denominator: RationalUnit,
+    }
 
     impl Rational {
         /// Makes a new rational number.

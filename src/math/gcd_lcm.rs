@@ -1,20 +1,20 @@
-#[codesnip::entry]
-pub trait GcdLcm<Rhs = Self> {
-    type Output;
-    fn gcd(self, other: Rhs) -> Self::Output;
-    fn lcm(self, other: Rhs) -> Self::Output;
-    fn gcd_lcm(self, other: Rhs) -> (Self::Output, Self::Output)
-    where
-        Self: Sized + Clone,
-        Rhs: Clone,
-    {
-        (self.clone().gcd(other.clone()), self.lcm(other))
-    }
-}
+#[codesnip::entry("GcdLcm")]
+pub use gcd_lcm_impl::GcdLcm;
 
 #[codesnip::entry("GcdLcm")]
 mod gcd_lcm_impl {
-    use super::GcdLcm;
+    pub trait GcdLcm<Rhs = Self> {
+        type Output;
+        fn gcd(self, other: Rhs) -> Self::Output;
+        fn lcm(self, other: Rhs) -> Self::Output;
+        fn gcd_lcm(self, other: Rhs) -> (Self::Output, Self::Output)
+        where
+            Self: Sized + Clone,
+            Rhs: Clone,
+        {
+            (self.clone().gcd(other.clone()), self.lcm(other))
+        }
+    }
 
     macro_rules! impl_common_num {
         (@forward_ref $t:ty) => {

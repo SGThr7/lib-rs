@@ -1,14 +1,11 @@
 use crate::math::math_structs::Monoid;
 
 #[codesnip::entry("BinaryIndexedTree", include("Monoid"))]
-#[derive(Clone, PartialEq, Eq)]
-pub struct BinaryIndexedTree<T: Monoid> {
-    tree: Vec<T::Set>,
-}
+pub use binary_indexed_tree::BinaryIndexedTree;
 
 #[codesnip::entry("BinaryIndexedTree", include("Monoid"))]
 mod binary_indexed_tree {
-    use super::{BinaryIndexedTree, Monoid};
+    use super::Monoid;
     use core::{
         fmt::Debug,
         iter::FusedIterator,
@@ -16,6 +13,11 @@ mod binary_indexed_tree {
         slice,
     };
     use std::vec;
+
+    #[derive(Clone, PartialEq, Eq)]
+    pub struct BinaryIndexedTree<T: Monoid> {
+        tree: Vec<T::Set>,
+    }
 
     impl<T: Monoid> BinaryIndexedTree<T> {
         pub fn new() -> Self {
@@ -291,16 +293,10 @@ mod tests {
     type BITree<T> = BinaryIndexedTree<AddMonoid<T>>;
 
     #[test]
-    fn debug() {
+    fn fmt_debug() {
         let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
         // [1, 3, 6, 10, 15, 21, 28, 36, 45]
         println!("{:?}", bit);
-    }
-
-    #[test]
-    fn from() {
-        let bit = BITree::from(vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
-        assert_eq!(vec![1, 3, 3, 10, 5, 11, 7, 36, 9], bit.tree);
     }
 
     #[test]
