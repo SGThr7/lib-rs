@@ -1,4 +1,7 @@
 #[codesnip::entry("BTreeMultiSet")]
+pub use btree_multiset::BTreeMultiSet;
+
+#[codesnip::entry("BTreeMultiSet")]
 pub mod btree_multiset {
     use core::{
         borrow::Borrow,

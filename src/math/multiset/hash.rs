@@ -1,4 +1,7 @@
 #[codesnip::entry("HashMultiSet")]
+pub use hash_multiset::HashMultiSet;
+
+#[codesnip::entry("HashMultiSet")]
 pub mod hash_multiset {
     use core::{
         borrow::Borrow,
