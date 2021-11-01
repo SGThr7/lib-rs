@@ -1,37 +1,37 @@
 #[codesnip::entry("ModIterator")]
-pub trait ModIterator: Iterator {
-    fn mod_sum<S>(self, modulo: Self::Item) -> S
-    where
-        Self: Sized,
-        S: ModSum<Self::Item>,
-    {
-        ModSum::mod_sum(self, modulo)
-    }
-    fn mod_product<P>(self, modulo: Self::Item) -> P
-    where
-        Self: Sized,
-        P: ModProduct<Self::Item>,
-    {
-        ModProduct::mod_product(self, modulo)
-    }
-}
-
-#[codesnip::entry("ModIterator")]
-pub trait ModSum<A = Self>: Sized {
-    fn mod_sum<I: Iterator<Item = A>>(iter: I, modulo: A) -> Self;
-}
-#[codesnip::entry("ModIterator")]
-pub trait ModProduct<A = Self>: Sized {
-    fn mod_product<I: Iterator<Item = A>>(iter: I, modulo: A) -> Self;
-}
+pub use mod_iterator_impl::ModIterator;
 
 #[codesnip::entry("ModIterator")]
 mod mod_iterator_impl {
-    use super::{ModIterator, ModProduct, ModSum};
+    use core::num::Wrapping;
+
+    pub trait ModIterator: Iterator {
+        fn mod_sum<S>(self, modulo: Self::Item) -> S
+        where
+            Self: Sized,
+            S: ModSum<Self::Item>,
+        {
+            ModSum::mod_sum(self, modulo)
+        }
+        fn mod_product<P>(self, modulo: Self::Item) -> P
+        where
+            Self: Sized,
+            P: ModProduct<Self::Item>,
+        {
+            ModProduct::mod_product(self, modulo)
+        }
+    }
+
+    pub trait ModSum<A = Self>: Sized {
+        fn mod_sum<I: Iterator<Item = A>>(iter: I, modulo: A) -> Self;
+    }
+
+    pub trait ModProduct<A = Self>: Sized {
+        fn mod_product<I: Iterator<Item = A>>(iter: I, modulo: A) -> Self;
+    }
 
     impl<I: ?Sized + Iterator> ModIterator for I {}
 
-    #[macro_export]
     macro_rules! mod_sum_product {
         (@impls $zero:expr, $one:expr, $($a:ty)*) => ($(
             impl ModSum for $a {
@@ -47,7 +47,7 @@ mod mod_iterator_impl {
         )*);
         (int: $($a:ty)*) => (
             mod_sum_product!(@impls 0, 1, $($a)*);
-            mod_sum_product!(@impls core::num::Wrapping(0), core::num::Wrapping(1), $(core::num::Wrapping<$a>)*);
+            mod_sum_product!(@impls Wrapping(0), Wrapping(1), $(Wrapping<$a>)*);
         );
         (float: $($a:ty)*) => (
             mod_sum_product!(@impls 0.0, 1.0, $($a)*);

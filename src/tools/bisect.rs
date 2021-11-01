@@ -1,98 +1,103 @@
 #[codesnip::entry("Bisect")]
-pub trait Bisect<T> {
-    fn lower_bound(&self, x: &T) -> usize
-    where
-        T: core::cmp::Ord,
-    {
-        self.lower_bound_by(|y| y.cmp(x))
-    }
+pub use bisect_impl::Bisect;
 
-    fn lower_bound_by<'a, F>(&'a self, f: F) -> usize
-    where
-        T: 'a,
-        F: FnMut(&'a T) -> core::cmp::Ordering,
-    {
-        self.find_range_by(f).start
-    }
+#[codesnip::entry("Bisect")]
+mod bisect_impl {
+    use core::{
+        cmp::{
+            Ord,
+            Ordering::{self, Equal, Greater, Less},
+        },
+        ops::Range,
+    };
 
-    fn upper_bound(&self, x: &T) -> usize
-    where
-        T: core::cmp::Ord,
-    {
-        self.upper_bound_by(|y| y.cmp(x))
-    }
-
-    fn upper_bound_by<'a, F>(&'a self, f: F) -> usize
-    where
-        T: 'a,
-        F: FnMut(&'a T) -> core::cmp::Ordering,
-    {
-        self.find_range_by(f).end
-    }
-
-    fn find_range(&self, x: &T) -> core::ops::Range<usize>
-    where
-        T: core::cmp::Ord,
-    {
-        self.find_range_by(|y| y.cmp(x))
-    }
-
-    fn find_range_by<'a, F>(&'a self, f: F) -> core::ops::Range<usize>
-    where
-        T: 'a,
-        F: FnMut(&'a T) -> core::cmp::Ordering;
-
-    /// See [slice::partition_point](https://doc.rust-lang.org/std/primitive.slice.html#method.partition_point).
-    /// `slice::partition_point` requires version 1.52 or upper.
-    fn partition_point<'a, F>(&'a self, mut f: F) -> usize
-    where
-        T: 'a,
-        F: FnMut(&'a T) -> bool,
-    {
-        self.lower_bound_by(|t| {
-            if f(t) {
-                core::cmp::Ordering::Less
-            } else {
-                core::cmp::Ordering::Greater
-            }
-        })
-    }
-}
-
-#[codesnip::entry("BisectVec", include("Bisect"))]
-impl<T> Bisect<T> for [T] {
-    fn find_range_by<'a, F>(&'a self, mut f: F) -> core::ops::Range<usize>
-    where
-        T: 'a,
-        F: FnMut(&'a T) -> core::cmp::Ordering,
-    {
-        let mut size = self.len();
-        let mut lower = (0, self.len());
-        let mut upper = (0, self.len());
-        use core::cmp::Ordering::{Equal, Greater, Less};
-        while size >= 1 {
-            let mid_lower = size / 2 + lower.0;
-            let cmp_lower = f(unsafe { self.get_unchecked(mid_lower) });
-            match cmp_lower {
-                Less => lower.0 = mid_lower + 1,
-                Equal | Greater => lower.1 = mid_lower,
-            }
-
-            let mid_upper = size / 2 + upper.0;
-            let cmp_upper = f(unsafe { self.get_unchecked(mid_upper) });
-            match cmp_upper {
-                Less | Equal => upper.0 = mid_upper + 1,
-                Greater => upper.1 = mid_upper,
-            }
-
-            size /= 2;
+    pub trait Bisect<T> {
+        fn lower_bound(&self, x: &T) -> usize
+        where
+            T: Ord,
+        {
+            self.lower_bound_by(|y| y.cmp(x))
         }
-        lower.0..upper.0
+
+        fn lower_bound_by<'a, F>(&'a self, f: F) -> usize
+        where
+            T: 'a,
+            F: FnMut(&'a T) -> Ordering,
+        {
+            self.find_range_by(f).start
+        }
+
+        fn upper_bound(&self, x: &T) -> usize
+        where
+            T: Ord,
+        {
+            self.upper_bound_by(|y| y.cmp(x))
+        }
+
+        fn upper_bound_by<'a, F>(&'a self, f: F) -> usize
+        where
+            T: 'a,
+            F: FnMut(&'a T) -> Ordering,
+        {
+            self.find_range_by(f).end
+        }
+
+        fn find_range(&self, x: &T) -> Range<usize>
+        where
+            T: Ord,
+        {
+            self.find_range_by(|y| y.cmp(x))
+        }
+
+        fn find_range_by<'a, F>(&'a self, f: F) -> Range<usize>
+        where
+            T: 'a,
+            F: FnMut(&'a T) -> Ordering;
+
+        /// See [slice::partition_point](https://doc.rust-lang.org/std/primitive.slice.html#method.partition_point).
+        /// `slice::partition_point` requires version 1.52 or upper.
+        fn partition_point<'a, F>(&'a self, mut f: F) -> usize
+        where
+            T: 'a,
+            F: FnMut(&'a T) -> bool,
+        {
+            self.lower_bound_by(|t| if f(t) { Less } else { Greater })
+        }
+    }
+
+    impl<T> Bisect<T> for [T] {
+        fn find_range_by<'a, F>(&'a self, mut f: F) -> Range<usize>
+        where
+            T: 'a,
+            F: FnMut(&'a T) -> Ordering,
+        {
+            let mut size = self.len();
+            let mut lower = (0, self.len());
+            let mut upper = (0, self.len());
+            while size >= 1 {
+                let mid_lower = size / 2 + lower.0;
+                let cmp_lower = f(unsafe { self.get_unchecked(mid_lower) });
+                match cmp_lower {
+                    Less => lower.0 = mid_lower + 1,
+                    Equal | Greater => lower.1 = mid_lower,
+                }
+
+                let mid_upper = size / 2 + upper.0;
+                let cmp_upper = f(unsafe { self.get_unchecked(mid_upper) });
+                match cmp_upper {
+                    Less | Equal => upper.0 = mid_upper + 1,
+                    Greater => upper.1 = mid_upper,
+                }
+
+                size /= 2;
+            }
+            lower.0..upper.0
+        }
     }
 }
 
 #[cfg(test)]
-mod test_bisect {
+mod tests {
     use super::*;
 
     #[test]
