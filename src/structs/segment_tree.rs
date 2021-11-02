@@ -1,5 +1,6 @@
-use crate::math::math_structs::monoid::{AddMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid};
-// use crate::math::num_structs::{ActMonoid, Semigroup};
+use crate::math::num::alge_struct::monoid::{
+    AddMonoid, BitOrMonoid, BitXorMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid,
+};
 
 mod lazy;
 
@@ -14,6 +15,10 @@ pub type MulSegmentTree<T> = SegmentTree<MulMonoid<T>>;
 pub type MaxSegmentTree<T> = SegmentTree<MaxMonoid<T>>;
 #[codesnip::entry("MinSegmentTree", include("SegmentTree", "MinMonoid"))]
 pub type MinSegmentTree<T> = SegmentTree<MinMonoid<T>>;
+#[codesnip::entry("BitXorSegmentTree", include("SegmentTree", "BitXorMonoid"))]
+pub type BitXorSegmentTree<T> = SegmentTree<BitXorMonoid<T>>;
+#[codesnip::entry("BitOrSegmentTree", include("SegmentTree", "BitOrMonoid"))]
+pub type BitOrSegmentTree<T> = SegmentTree<BitOrMonoid<T>>;
 
 #[codesnip::entry("SegmentTree", include("Monoid"))]
 mod segment_tree_impl {
@@ -31,7 +36,7 @@ mod segment_tree_impl {
 
         fn init(n: usize, s: &[M::Set]) -> Self {
             // let n = n.next_power_of_two();
-            let mut tree = vec![M::identity(); n * 2 - 1];
+            let mut tree = vec![M::id(); n * 2 - 1];
             tree[n - 1..n - 1 + s.len()].clone_from_slice(s);
             let mut res = Self { n, tree };
             for i in (0..n - 1).rev() {
@@ -84,8 +89,8 @@ mod segment_tree_impl {
             let is_odd = |x: usize| x & 1 == 0;
             let div2 = |x: &mut usize| *x >>= 1;
 
-            let mut vl = M::identity();
-            let mut vr = M::identity();
+            let mut vl = M::id();
+            let mut vr = M::id();
             while l < r {
                 if is_odd(l) {
                     vl = M::operate(&vl, &self.tree[l]);
@@ -123,7 +128,7 @@ mod segment_tree_impl {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::math_structs::monoid::{
+    use crate::math::num::alge_struct::monoid::{
         AddMonoid, BitXorMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid,
     };
     use core::{cmp::PartialEq, fmt::Debug};
@@ -143,7 +148,7 @@ mod tests {
 
                     // set test
                     let mut segtree = Seg::new(n);
-                    let mut ans = vec![Mono::identity(); n];
+                    let mut ans = vec![Mono::id(); n];
                     for i in 0..n {
                         segtree.set(i, v[i]);
                         ans[i] = v[i];
@@ -176,9 +181,7 @@ mod tests {
         for i in 0..=n {
             for k in i..=n {
                 assert_eq!(
-                    ans[i..k]
-                        .iter()
-                        .fold(M::identity(), |a, b| M::operate(&a, &b)),
+                    ans[i..k].iter().fold(M::id(), |a, b| M::operate(&a, &b)),
                     segtree.query(i..k),
                     "range: `{}..{}`",
                     i,

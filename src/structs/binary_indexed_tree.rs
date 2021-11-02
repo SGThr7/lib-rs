@@ -1,4 +1,4 @@
-use crate::math::math_structs::Monoid;
+use crate::math::num::Monoid;
 
 #[codesnip::entry("BinaryIndexedTree", include("Monoid"))]
 pub use binary_indexed_tree::BinaryIndexedTree;
@@ -26,7 +26,7 @@ mod binary_indexed_tree {
 
         pub fn with_size(size: usize) -> Self {
             Self {
-                tree: vec![T::identity(); size],
+                tree: vec![T::id(); size],
             }
         }
 
@@ -46,7 +46,7 @@ mod binary_indexed_tree {
         pub fn increase(&mut self, additional: usize) {
             self.tree.reserve(additional);
             for _ in 0..additional {
-                self.push(T::identity());
+                self.push(T::id());
             }
         }
 
@@ -76,7 +76,7 @@ mod binary_indexed_tree {
         {
             let mut len = self.len().next_power_of_two();
             let mut i = 0;
-            let mut total = T::identity();
+            let mut total = T::id();
             while 0 < len {
                 if i + len - 1 < self.len() && T::operate(&total, &self.tree[i + len - 1]) < x {
                     total = T::operate(&total, &self.tree[i + len - 1]);
@@ -134,7 +134,7 @@ mod binary_indexed_tree {
         bit: &BinaryIndexedTree<T>,
         exclusive_bound: usize,
     ) -> T::Set {
-        let mut ret = T::identity();
+        let mut ret = T::id();
         let mut i = exclusive_bound;
         while 0 < i {
             ret = T::operate(&bit.tree[i - 1], &ret);
@@ -203,7 +203,7 @@ mod binary_indexed_tree {
                 self.index += 1;
 
                 let mut i = i;
-                let mut ret = T::identity();
+                let mut ret = T::id();
                 while 0 < i {
                     ret = T::operate(&self.memo[i.trailing_zeros() as usize], &ret);
                     i -= lsb(i);
@@ -261,7 +261,7 @@ mod binary_indexed_tree {
                 self.index += 1;
 
                 let mut i = i;
-                let mut ret = T::identity();
+                let mut ret = T::id();
                 while 0 < i {
                     ret = T::operate(self.memo[i.trailing_zeros() as usize], &ret);
                     i -= lsb(i);
@@ -289,7 +289,7 @@ mod binary_indexed_tree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::math_structs::monoid::AddMonoid;
+    use crate::math::num::alge_struct::monoid::AddMonoid;
     type BITree<T> = BinaryIndexedTree<AddMonoid<T>>;
 
     #[test]
