@@ -14,6 +14,7 @@ pub trait Monoid: Semigroup {
 }
 
 #[codesnip::entry(include("Monoid", "Semigroup"))]
+#[allow(unused_macros)]
 macro_rules! define_monoid {
     (@impl $monoid:ident <$t:tt $(: $($bounds:path),*)?>, |$lhs:ident,$rhs:ident| $operate:expr, $id:expr) => {
         impl<$t$(: $($bounds+)*)?> Monoid for $monoid<$t> {
@@ -34,6 +35,7 @@ macro_rules! define_monoid {
     };
 }
 #[codesnip::entry("define_monoid")]
+#[allow(unused_imports)]
 pub(crate) use define_monoid;
 
 #[codesnip::entry("AddMonoid", include("define_monoid", "Zero"))]
