@@ -1,5 +1,5 @@
 #[codesnip::entry("Bisect")]
-pub use bisect_impl::Bisect;
+pub use bisect_impl::{Bisect, RangeBisect};
 
 #[codesnip::entry("Bisect")]
 mod bisect_impl {
@@ -8,7 +8,10 @@ mod bisect_impl {
             Ord,
             Ordering::{self, Equal, Greater, Less},
         },
-        ops::Range,
+        ops::{
+            Bound::{Excluded, Included, Unbounded},
+            Range, RangeBounds,
+        },
     };
 
     pub trait Bisect<T> {
@@ -71,20 +74,48 @@ mod bisect_impl {
             T: 'a,
             F: FnMut(&'a T) -> Ordering,
         {
-            let mut size = self.len();
-            let mut lower = (0, self.len());
-            let mut upper = (0, self.len());
+            (..self.len()).find_range_by(|i| f(unsafe { self.get_unchecked(i) }))
+        }
+    }
+
+    pub trait RangeBisect<Idx> {
+        fn find_range_by<F: FnMut(Idx) -> Ordering>(&self, f: F) -> Range<Idx>;
+        fn lower_bound_by<F: FnMut(Idx) -> Ordering>(&self, f: F) -> Idx {
+            self.find_range_by(f).start
+        }
+        fn upper_bound_by<F: FnMut(Idx) -> Ordering>(&self, f: F) -> Idx {
+            self.find_range_by(f).end
+        }
+        fn partition_point<F: FnMut(Idx) -> bool>(&self, mut f: F) -> Idx {
+            self.lower_bound_by(|i| if f(i) { Less } else { Greater })
+        }
+    }
+
+    impl<R: RangeBounds<usize>> RangeBisect<usize> for R {
+        fn find_range_by<F: FnMut(usize) -> Ordering>(&self, mut f: F) -> Range<usize> {
+            let start = match self.start_bound() {
+                Included(i) => *i,
+                Excluded(i) => i + 1,
+                Unbounded => core::usize::MIN,
+            };
+            let end = match self.end_bound() {
+                Included(i) => i + 1,
+                Excluded(i) => *i,
+                Unbounded => core::usize::MAX,
+            };
+
+            let mut size = end - start;
+            let mut lower = (start, end);
+            let mut upper = (start, end);
             while size >= 1 {
                 let mid_lower = size / 2 + lower.0;
-                let cmp_lower = f(unsafe { self.get_unchecked(mid_lower) });
-                match cmp_lower {
+                match f(mid_lower) {
                     Less => lower.0 = mid_lower + 1,
                     Equal | Greater => lower.1 = mid_lower,
                 }
 
                 let mid_upper = size / 2 + upper.0;
-                let cmp_upper = f(unsafe { self.get_unchecked(mid_upper) });
-                match cmp_upper {
+                match f(mid_upper) {
                     Less | Equal => upper.0 = mid_upper + 1,
                     Greater => upper.1 = mid_upper,
                 }
@@ -134,5 +165,10 @@ mod tests {
         assert_eq!(i, 4);
         assert!(v[..i].iter().all(|&x| x < 5));
         assert!(v[i..].iter().all(|&x| !(x < 5)));
+    }
+
+    #[test]
+    fn range_bisect() {
+        assert_eq!((..).partition_point(|i| i * 2 < 13), 7)
     }
 }
