@@ -24,7 +24,7 @@ mod lazy_segtree {
         lst_monoid: PhantomData<LM>,
     }
 
-    /// if i == 0 { 0 } else { log2(i) }
+    // if i == 0 { 0 } else { log2(i).floor() + 1 }
     fn bit(i: usize) -> usize {
         (64 - (i as u64).leading_zeros()) as usize
     }
@@ -110,6 +110,7 @@ mod lazy_segtree {
         }
 
         pub fn tree_index(&self) -> impl Iterator<Item = usize> {
+            // wrapping_shr
             fn wshr(lhs: usize, rhs: u32) -> usize {
                 lhs.checked_shr(rhs).unwrap_or(0)
             }
