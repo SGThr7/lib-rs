@@ -73,9 +73,7 @@ mod lazy_segtree {
         }
 
         pub fn range(&self, index: usize) -> usize {
-            let log2: u64 = (index + 1).try_into().ok().unwrap();
-            let log2 = 64 - log2.leading_zeros() - 1;
-            let log2: usize = log2.try_into().ok().unwrap();
+            let log2 = bit(index + 1) - 1;
             1 << (self.depth() - log2)
         }
     }
