@@ -1,5 +1,5 @@
 use super::Semigroup;
-use crate::math::num::{BoundedAbove, BoundedBelow, One, Zero};
+use crate::math::num::{AllBitOne, BoundedAbove, BoundedBelow, One, Zero};
 
 /// [Monoid](https://en.wikipedia.org/wiki/Monoid) is an semigroup with identity element.
 ///
@@ -55,3 +55,6 @@ define_monoid! { BitXorMonoid<T: Clone, Zero, BitXor<Output = T>>, |lhs,rhs| Bit
 
 #[codesnip::entry("BitOrMonoid", include("define_monoid", "Zero"))]
 define_monoid! { BitOrMonoid<T: Clone, Zero, BitOr<Output = T>>, |lhs,rhs| BitOr::bitor(lhs.clone(), rhs.clone()), Zero::zero(), mod bitor_monoid_impl { use core::ops::BitOr; } }
+
+#[codesnip::entry("BitAndMonoid", include("define_monoid", "AllBitOne"))]
+define_monoid! { BitAndMonoid<T: Clone, AllBitOne, BitAnd<Output = T>>, |lhs,rhs| BitAnd::bitand(lhs.clone(), rhs.clone()), AllBitOne::ALL_BIT_ONE, mod bitand_monoid_impl { use core::ops::BitAnd; } }

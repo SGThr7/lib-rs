@@ -1,5 +1,5 @@
 use crate::math::num::alge_struct::monoid::{
-    AddMonoid, BitOrMonoid, BitXorMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid,
+    AddMonoid, BitAndMonoid, BitOrMonoid, BitXorMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid,
 };
 
 mod lazy;
@@ -23,6 +23,8 @@ pub type MinSegmentTree<T> = SegmentTree<MinMonoid<T>>;
 pub type BitXorSegmentTree<T> = SegmentTree<BitXorMonoid<T>>;
 #[codesnip::entry("BitOrSegmentTree", include("SegmentTree", "BitOrMonoid"))]
 pub type BitOrSegmentTree<T> = SegmentTree<BitOrMonoid<T>>;
+#[codesnip::entry("BitAndSegmentTree", include("SegmentTree", "BitAndMonoid"))]
+pub type BitAndSegmentTree<T> = SegmentTree<BitAndMonoid<T>>;
 
 #[codesnip::entry("SegmentTree", include("Monoid"))]
 mod segment_tree_impl {
@@ -132,9 +134,6 @@ mod segment_tree_impl {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::num::alge_struct::monoid::{
-        AddMonoid, BitXorMonoid, MaxMonoid, MinMonoid, Monoid, MulMonoid,
-    };
     use core::{cmp::PartialEq, fmt::Debug};
 
     macro_rules! test_segtree {
@@ -168,6 +167,8 @@ mod tests {
         max, MaxMonoid
         min, MinMonoid
         xor, BitXorMonoid
+        or, BitOrMonoid
+        and, BitAndMonoid
     }
 
     fn check_segtree<M>(ans: &[M::Set], segtree: &SegmentTree<M>)

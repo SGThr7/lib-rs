@@ -423,7 +423,7 @@ mod tests {
         LSTMonoid, LazySegTree, Monoid,
     };
     use crate::math::num::alge_struct::monoid::{
-        AddMonoid, BitOrMonoid, BitXorMonoid, MaxMonoid, MinMonoid, MulMonoid,
+        AddMonoid, BitAndMonoid, BitOrMonoid, BitXorMonoid, MaxMonoid, MinMonoid, MulMonoid,
     };
     use core::fmt::Debug;
 
@@ -471,12 +471,14 @@ mod tests {
         replace_min:  LMRep, MinMonoid;
         replace_xor:  LMRep, BitXorMonoid;
         replace_or:   LMRep, BitOrMonoid;
+        replace_and:  LMRep, BitAndMonoid;
         add_sum:  LMAdd, AddMonoid;
         add_prod: LMAdd, MulMonoid;
         add_max:  LMAdd, MaxMonoid;
         add_min:  LMAdd, MinMonoid;
         add_xor:  LMAdd, BitXorMonoid;
         add_or:   LMAdd, BitOrMonoid;
+        add_and:  LMAdd, BitAndMonoid;
     }
 
     #[allow(dead_code)]
