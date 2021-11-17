@@ -29,6 +29,13 @@ pub type BitAndSegmentTree<T> = SegmentTree<BitAndMonoid<T>>;
 #[codesnip::entry("SegmentTree", include("Monoid"))]
 mod segment_tree_impl {
     use super::Monoid;
+    use core::{
+        ops::{
+            Bound::{Excluded, Included, Unbounded},
+            Index, RangeBounds,
+        },
+        slice::SliceIndex,
+    };
 
     pub struct SegmentTree<M: Monoid> {
         n: usize,
@@ -67,24 +74,24 @@ mod segment_tree_impl {
 
         pub fn get<I>(&self, index: I) -> Option<&I::Output>
         where
-            I: core::slice::SliceIndex<[M::Set]>,
+            I: SliceIndex<[M::Set]>,
         {
             self.tree[self.n - 1..].get(index)
         }
 
         pub fn query<R>(&self, range: R) -> M::Set
         where
-            R: core::ops::RangeBounds<usize>,
+            R: RangeBounds<usize>,
         {
             let l = match range.start_bound() {
-                core::ops::Bound::Included(&l) => l,
-                core::ops::Bound::Excluded(&l) => l + 1,
-                core::ops::Bound::Unbounded => 0,
+                Included(&l) => l,
+                Excluded(&l) => l + 1,
+                Unbounded => 0,
             };
             let r = match range.end_bound() {
-                core::ops::Bound::Included(&r) => r + 1,
-                core::ops::Bound::Excluded(&r) => r,
-                core::ops::Bound::Unbounded => self.n,
+                Included(&r) => r + 1,
+                Excluded(&r) => r,
+                Unbounded => self.n,
             };
             assert!(l <= r);
             assert!(r <= self.n);
@@ -118,15 +125,15 @@ mod segment_tree_impl {
         }
     }
 
-    impl<M, I> core::ops::Index<I> for SegmentTree<M>
+    impl<M, I> Index<I> for SegmentTree<M>
     where
         M: Monoid,
-        I: core::slice::SliceIndex<[M::Set]>,
+        I: SliceIndex<[M::Set]>,
     {
-        type Output = <I as core::slice::SliceIndex<[M::Set]>>::Output;
+        type Output = <I as SliceIndex<[M::Set]>>::Output;
 
         fn index(&self, index: I) -> &Self::Output {
-            core::ops::Index::index(&self.tree[self.n - 1..], index)
+            Index::index(&self.tree[self.n - 1..], index)
         }
     }
 }

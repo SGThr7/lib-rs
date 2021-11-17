@@ -10,7 +10,6 @@ pub use lazy_segtree::LazySegTree;
 mod lazy_segtree {
     use super::{LSTMonoid, Monoid};
     use core::{
-        convert::TryInto,
         fmt::{Debug, Display, Formatter, Result},
         marker::PhantomData,
         ops::{Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
@@ -36,9 +35,7 @@ mod lazy_segtree {
 
         fn init(min_len: usize, v: &[M::Set]) -> Self {
             let min_len = min_len.max(v.len());
-            let depth: u64 = min_len.saturating_sub(1).try_into().ok().unwrap();
-            let depth = 64 - depth.leading_zeros();
-            let depth: usize = depth.try_into().ok().unwrap();
+            let depth = bit(min_len);
             // 2^{depth}
             let len = 1 << depth;
             let size = 2 * len - 1;
@@ -386,8 +383,6 @@ mod lazy_segtree {
     {
         fn fmt(&self, f: &mut Formatter<'_>) -> Result {
             for i in self.tree_index() {
-                write!(f, "{:3}: ", i)?;
-
                 let depth = bit(i + 1) - 1;
                 for k in (1..depth).rev() {
                     if ((i + 1) >> k) & 1 == 0 {
