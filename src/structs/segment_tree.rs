@@ -3,6 +3,10 @@ use crate::math::num::alge_struct::monoid::{
 };
 
 mod lazy;
+pub use lazy::{
+    lst_monoid::{self, LSTMonoid},
+    LazySegTree,
+};
 
 #[codesnip::entry("SegmentTree")]
 pub use segment_tree_impl::SegmentTree;
