@@ -74,7 +74,7 @@ mod bisect_impl {
             T: 'a,
             F: FnMut(&'a T) -> Ordering,
         {
-            (..self.len()).find_range_by(|i| f(unsafe { self.get_unchecked(i) }))
+            (0..self.len()).find_range_by(|i| f(unsafe { self.get_unchecked(i) }))
         }
     }
 
@@ -93,35 +93,47 @@ mod bisect_impl {
 
     impl<R: RangeBounds<usize>> RangeBisect<usize> for R {
         fn find_range_by<F: FnMut(usize) -> Ordering>(&self, mut f: F) -> Range<usize> {
-            let start = match self.start_bound() {
+            let mut start = match self.start_bound() {
                 Included(i) => *i,
                 Excluded(i) => i + 1,
                 Unbounded => core::usize::MIN,
             };
-            let end = match self.end_bound() {
+            let mut end = match self.end_bound() {
                 Included(i) => i + 1,
                 Excluded(i) => *i,
                 Unbounded => core::usize::MAX,
             };
 
-            let mut size = end - start;
-            let mut lower = (start, end);
-            let mut upper = (start, end);
-            while size >= 1 {
-                let mid_lower = size / 2 + lower.0;
-                match f(mid_lower) {
-                    Less => lower.0 = mid_lower + 1,
-                    Equal | Greater => lower.1 = mid_lower,
+            let mut mid = start + (end - start) / 2;
+            let mut cmp = f(mid);
+            while end - start >= 1 && cmp != Equal {
+                match cmp {
+                    Less => start = mid + 1,
+                    Greater => end = mid,
+                    Equal => unreachable!(),
+                }
+                mid = start + (end - start) / 2;
+                cmp = f(mid);
                 }
 
-                let mid_upper = size / 2 + upper.0;
-                match f(mid_upper) {
-                    Less | Equal => upper.0 = mid_upper + 1,
-                    Greater => upper.1 = mid_upper,
+            let mut lower = (start, mid);
+            while lower.1 - lower.0 >= 1 {
+                let mid = lower.0 + (lower.1 - lower.0) / 2;
+                match f(mid) {
+                    Less => lower.0 = mid + 1,
+                    Equal | Greater => lower.1 = mid,
+                }
                 }
 
-                size /= 2;
+            let mut upper = (mid, end);
+            while upper.1 - upper.0 >= 1 {
+                let mid = upper.0 + (upper.1 - upper.0) / 2;
+                match f(mid) {
+                    Less | Equal => upper.0 = mid + 1,
+                    Greater => upper.1 = mid,
             }
+            }
+
             lower.0..upper.0
         }
     }
@@ -132,25 +144,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn bounds() {
-        // 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 17, 17, 17, 17, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
-        let v = (2..33)
-            .map(|x| if (13..19).contains(&x) { 17 } else { x })
-            .collect::<Vec<_>>();
-        for i in 0..35 {
-            // dbg!(i, v.iter().position(|&x| x == i));
-            let l = v
+    fn find_range() {
+        let mut v = vec![2, 1, 4, 7, 4, 8, 3, 6, 4, 7];
+        v.sort();
+        let v = v;
+
+        for i in 0..10 {
+            let lans = v
                 .iter()
                 .position(|&x| x == i)
-                .unwrap_or(v.binary_search(&i).err().unwrap_or_default());
-            let r = v
+                .unwrap_or_else(|| v.binary_search(&i).err().unwrap());
+            let rans = v
                 .iter()
                 .rposition(|&x| x == i)
                 .and_then(|x| Some(x + 1))
                 .unwrap_or_else(|| v.binary_search(&i).err().unwrap());
-            assert_eq!(l, v.lower_bound(&i), "lower_bound, i: {}", i);
-            assert_eq!(r, v.upper_bound(&i), "upper_bound, i: {}", i);
-            assert_eq!(l..r, v.find_range(&i), "find_range, i: {}", i);
+            assert_eq!(v.find_range(&i), lans..rans, "range, i: {}", i);
+        }
+    }
         }
     }
 
