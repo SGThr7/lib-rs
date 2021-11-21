@@ -35,7 +35,7 @@ mod lazy_segtree {
 
         fn init(min_len: usize, v: &[M::Set]) -> Self {
             let min_len = min_len.max(v.len());
-            let depth = bit(min_len);
+            let depth = bit(min_len.saturating_sub(1));
             // 2^{depth}
             let len = 1 << depth;
             let size = 2 * len - 1;
