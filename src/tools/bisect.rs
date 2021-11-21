@@ -22,6 +22,15 @@ mod bisect_impl {
             self.lower_bound_by(|y| y.cmp(x))
         }
 
+        fn lower_bound_by_key<'a, B, F>(&'a self, b: &B, mut f: F) -> usize
+        where
+            T: 'a,
+            F: FnMut(&'a T) -> B,
+            B: Ord,
+        {
+            self.lower_bound_by(|k| f(k).cmp(b))
+        }
+
         fn lower_bound_by<'a, F>(&'a self, f: F) -> usize
         where
             T: 'a,
@@ -37,6 +46,15 @@ mod bisect_impl {
             self.upper_bound_by(|y| y.cmp(x))
         }
 
+        fn upper_bound_by_key<'a, B, F>(&'a self, b: &B, mut f: F) -> usize
+        where
+            T: 'a,
+            F: FnMut(&'a T) -> B,
+            B: Ord,
+        {
+            self.upper_bound_by(|k| f(k).cmp(b))
+        }
+
         fn upper_bound_by<'a, F>(&'a self, f: F) -> usize
         where
             T: 'a,
@@ -50,6 +68,15 @@ mod bisect_impl {
             T: Ord,
         {
             self.find_range_by(|y| y.cmp(x))
+        }
+
+        fn find_range_by_key<'a, B, F>(&'a self, b: &B, mut f: F) -> Range<usize>
+        where
+            T: 'a,
+            F: FnMut(&'a T) -> B,
+            B: Ord,
+        {
+            self.find_range_by(|k| f(k).cmp(b))
         }
 
         fn find_range_by<'a, F>(&'a self, f: F) -> Range<usize>
@@ -114,7 +141,7 @@ mod bisect_impl {
                 }
                 mid = start + (end - start) / 2;
                 cmp = f(mid);
-                }
+            }
 
             let mut lower = (start, mid);
             while lower.1 - lower.0 >= 1 {
@@ -123,7 +150,7 @@ mod bisect_impl {
                     Less => lower.0 = mid + 1,
                     Equal | Greater => lower.1 = mid,
                 }
-                }
+            }
 
             let mut upper = (mid, end);
             while upper.1 - upper.0 >= 1 {
@@ -131,7 +158,7 @@ mod bisect_impl {
                 match f(mid) {
                     Less | Equal => upper.0 = mid + 1,
                     Greater => upper.1 = mid,
-            }
+                }
             }
 
             lower.0..upper.0
@@ -142,6 +169,7 @@ mod bisect_impl {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cmp::Reverse;
 
     #[test]
     fn find_range() {
@@ -162,6 +190,34 @@ mod tests {
             assert_eq!(v.find_range(&i), lans..rans, "range, i: {}", i);
         }
     }
+
+    #[test]
+    fn bounds_by_key() {
+        let mut v = vec![2, 1, 4, 7, 4, 8, 3, 6, 4, 7];
+        let map = |x: &usize| Reverse(*x);
+        v.sort_by_key(map);
+        let v = v;
+
+        for i in 0..10 {
+            let lans = v
+                .iter()
+                .position(|&x| x == i)
+                .unwrap_or_else(|| v.binary_search_by_key(&Reverse(i), map).err().unwrap());
+            let rans = v
+                .iter()
+                .rposition(|&x| x == i)
+                .and_then(|x| Some(x + 1))
+                .unwrap_or_else(|| {
+                    v.binary_search_by_key(&Reverse(i), |&x| Reverse(x))
+                        .err()
+                        .unwrap()
+                });
+            assert_eq!(
+                v.find_range_by_key(&Reverse(i), |&x| Reverse(x)),
+                lans..rans,
+                "range, i: {}",
+                i
+            );
         }
     }
 
