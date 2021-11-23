@@ -16,35 +16,38 @@ mod gcd_lcm_impl {
         }
     }
 
-    macro_rules! impl_common_num {
+    macro_rules! impl_gcd_lcm_int {
         (@forward_ref $t:ty) => {
             impl GcdLcm<&$t> for $t {
                 type Output = <$t as GcdLcm>::Output;
-                fn gcd(self, other: &$t) -> Self::Output { self.gcd(*other) }
-                fn lcm(self, other: &$t) -> Self::Output { self.lcm(*other) }
+                fn gcd(self, other: &$t) -> Self::Output { GcdLcm::gcd(self, *other) }
+                fn lcm(self, other: &$t) -> Self::Output { GcdLcm::lcm(self, *other) }
+                fn gcd_lcm(self, other: &$t) -> (Self::Output, Self::Output) { GcdLcm::gcd_lcm(self, *other) }
             }
             impl GcdLcm<$t> for &$t {
                 type Output = <$t as GcdLcm>::Output;
-                fn gcd(self, other: $t) -> Self::Output { self.clone().gcd(other) }
-                fn lcm(self, other: $t) -> Self::Output { self.clone().lcm(other) }
+                fn gcd(self, other: $t) -> Self::Output { GcdLcm::gcd(*self, other) }
+                fn lcm(self, other: $t) -> Self::Output { GcdLcm::gcd(*self, other) }
+                fn gcd_lcm(self, other: $t) -> (Self::Output, Self::Output) { GcdLcm::gcd_lcm(*self, other) }
             }
             impl GcdLcm<&$t> for &$t {
                 type Output = <$t as GcdLcm>::Output;
-                fn gcd(self, other: &$t) -> Self::Output { self.clone().gcd(other.clone()) }
-                fn lcm(self, other: &$t) -> Self::Output { self.clone().lcm(other.clone()) }
+                fn gcd(self, other: &$t) -> Self::Output { GcdLcm::gcd(*self, *other) }
+                fn lcm(self, other: &$t) -> Self::Output { GcdLcm::gcd(*self, *other) }
+                fn gcd_lcm(self, other: &$t) -> (Self::Output, Self::Output) { GcdLcm::gcd_lcm(*self, *other) }
             }
         };
-        ($zero:expr, for $($t:ty)*) => {$(
+        ($($t:ty)*) => {$(
             impl GcdLcm for $t {
                 type Output = $t;
 
-                fn gcd(self, other: Self) -> Self {
+                fn gcd(self, other: $t) -> $t {
                     let (mut a, mut b) = if self >= other {
                         (self, other)
                     } else {
                         (other, self)
                     };
-                    while b != $zero {
+                    while b != 0 {
                         let r = a.rem_euclid(b);
                         a = b;
                         b = r;
@@ -52,23 +55,22 @@ mod gcd_lcm_impl {
                     a
                 }
 
-                fn lcm(self, other: Self) -> Self {
+                fn lcm(self, other: $t) -> $t {
                     let gcd = self.gcd(other);
                     self / gcd * other
                 }
 
-                fn gcd_lcm(self, other: Self) -> (Self::Output, Self::Output){
-                    let gcd = self.clone().gcd(other.clone());
+                fn gcd_lcm(self, other: $t) -> ($t, $t){
+                    let gcd = self.gcd(other);
                     let lcm = self / gcd * other;
                     (gcd, lcm)
                 }
             }
-            impl_common_num! { @forward_ref $t }
+            impl_gcd_lcm_int! { @forward_ref $t }
         )*};
     }
 
-    impl_common_num!(0, for i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize);
-    impl_common_num!(0., for f32 f64);
+    impl_gcd_lcm_int! { i8 i16 i32 i64 i128 isize u8 u16 u32 u64 u128 usize }
 }
 
 #[cfg(test)]
