@@ -1,6 +1,6 @@
 #! /bin/bash
 
 cargo test && \
-cargo codesnip -t="$HOME/Develop/lib/rust/src/lib.rs" --format=minify cache "/Users/sgthr7/Develop/lib/rust/target/codesnip/codesnip-cache.bin" && \
+cargo codesnip -t="$HOME/Develop/lib/rust/src/lib.rs" --cfg="nightly" cache "/Users/sgthr7/Develop/lib/rust/target/codesnip/codesnip-cache.bin" && \
 cargo codesnip --use-cache="./target/codesnip/codesnip-cache.bin" verify --verbose && \
 cargo doc --no-deps
