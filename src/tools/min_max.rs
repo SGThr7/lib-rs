@@ -1,4 +1,3 @@
-#[codesnip::entry]
 pub trait MinMax
 where
     Self: Sized,
@@ -6,7 +5,6 @@ where
     fn min_max(self, other: Self) -> (Self, Self);
 }
 
-#[codesnip::entry("MinMax")]
 impl<T: core::cmp::PartialOrd> MinMax for T {
     fn min_max(self, other: Self) -> (Self, Self) {
         if self > other {

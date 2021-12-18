@@ -1,10 +1,8 @@
-#[codesnip::entry]
 pub struct UnionFind {
     parent: Vec<usize>,
     size: Vec<usize>,
 }
 
-#[codesnip::entry("UnionFind")]
 impl UnionFind {
     pub fn new(n: usize) -> Self {
         let parent = (0..n).collect::<Vec<_>>();

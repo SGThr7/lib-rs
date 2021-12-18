@@ -1,361 +1,355 @@
-#[codesnip::entry("BTreeMultiSet")]
-pub use btree_multiset::BTreeMultiSet;
+use core::borrow::Borrow;
+use core::fmt::Debug;
+use core::hash::{BuildHasher, Hash};
+use core::iter::{FromIterator, FusedIterator};
+use core::mem::swap;
+use std::collections::{
+    btree_set::{self, BTreeSet},
+    hash_map::{HashMap, RandomState},
+};
 
-#[codesnip::entry("BTreeMultiSet")]
-pub mod btree_multiset {
-    use core::{
-        borrow::Borrow,
-        fmt::Debug,
-        hash::{BuildHasher, Hash},
-        iter::FromIterator,
-        iter::FusedIterator,
-        mem::swap,
-    };
-    use std::collections::{btree_set, hash_map::RandomState, BTreeSet, HashMap};
+pub struct BTreeMultiSet<T, S = RandomState> {
+    len: usize,
+    tree: BTreeSet<T>,
+    counter: HashMap<T, usize, S>,
+}
 
-    pub struct BTreeMultiSet<T, S = RandomState> {
-        len: usize,
-        tree: BTreeSet<T>,
-        counter: HashMap<T, usize, S>,
+impl<T, S> BTreeMultiSet<T, S>
+where
+    T: Ord + Hash,
+    S: Default + BuildHasher,
+{
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+impl<T, S> BTreeMultiSet<T, S> {
+    pub fn len(&self) -> usize {
+        self.len
     }
 
-    impl<T, S> BTreeMultiSet<T, S>
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn clear(&mut self)
     where
-        T: Ord + Hash,
-        S: Default + BuildHasher,
+        T: Ord,
     {
-        pub fn new() -> Self {
-            Default::default()
-        }
+        self.len = 0;
+        self.tree.clear();
+        self.counter.clear();
     }
 
-    impl<T, S> BTreeMultiSet<T, S> {
-        pub fn len(&self) -> usize {
-            self.len
-        }
-
-        pub fn is_empty(&self) -> bool {
-            self.len() == 0
-        }
-
-        pub fn clear(&mut self)
-        where
-            T: Ord,
-        {
-            self.len = 0;
-            self.tree.clear();
-            self.counter.clear();
-        }
-
-        pub fn contains<Q>(&self, value: &Q) -> bool
-        where
-            T: Borrow<Q> + Ord,
-            Q: Ord + ?Sized,
-        {
-            self.tree.contains(value)
-        }
-
-        pub fn get<Q>(&self, value: &Q) -> Option<&T>
-        where
-            T: Borrow<Q> + Ord,
-            Q: Ord + ?Sized,
-        {
-            self.tree.get(value)
-        }
-    }
-
-    impl<T, S> BTreeMultiSet<T, S>
+    pub fn contains<Q>(&self, value: &Q) -> bool
     where
-        S: BuildHasher,
+        T: Borrow<Q> + Ord,
+        Q: Ord + ?Sized,
     {
-        pub fn count<Q>(&self, value: &Q) -> usize
-        where
-            T: Borrow<Q> + Eq + Hash,
-            Q: Eq + Hash,
-        {
-            self.counter.get(value).copied().unwrap_or_default()
-        }
-
-        pub fn insert(&mut self, value: T) -> bool
-        where
-            T: Clone + Ord + Hash,
-        {
-            self.len += 1;
-            *self.counter.entry(value.clone()).or_insert(0) += 1;
-            self.tree.insert(value)
-        }
-
-        pub fn remove<Q>(&mut self, value: &Q) -> bool
-        where
-            T: Borrow<Q> + Ord + Hash,
-            Q: Ord + Hash,
-        {
-            if let Some(count) = self.counter.get_mut(value) {
-                *count -= 1;
-                if *count == 0 {
-                    self.tree.remove(value);
-                    self.counter.remove(value);
-                }
-                true
-            } else {
-                false
-            }
-        }
-
-        pub fn take<Q>(&mut self, value: &Q) -> Option<T>
-        where
-            T: Borrow<Q> + Ord + Clone + Hash,
-            Q: Ord + Hash,
-        {
-            if let Some(count) = self.counter.get_mut(value) {
-                *count -= 1;
-                if *count == 0 {
-                    self.counter.remove(value);
-                    self.tree.take(value)
-                } else {
-                    self.tree.get(value).cloned()
-                }
-            } else {
-                None
-            }
-        }
-
-        pub fn iter(&self) -> Iter<'_, T, S>
-        where
-            T: Eq + Hash,
-        {
-            Iter {
-                iter: self.tree.iter(),
-                counter: &self.counter,
-                peek: None,
-                peek_count: 0,
-            }
-        }
-
-        pub fn is_disjoint(&self, other: &BTreeMultiSet<T, S>) -> bool
-        where
-            T: Ord,
-        {
-            if self.tree.len() < other.tree.len() {
-                self.tree.iter().all(|v| !other.contains(v))
-            } else {
-                other.tree.iter().all(|v| !self.contains(v))
-            }
-        }
-
-        pub fn is_subset(&self, other: &BTreeMultiSet<T, S>) -> bool
-        where
-            T: Ord + Hash,
-        {
-            self.len() <= other.len()
-                && self
-                    .counter
-                    .iter()
-                    .all(|(value, count)| other.counter.get(value).map_or(false, |c| c >= count))
-        }
-
-        pub fn is_superset(&self, other: &BTreeMultiSet<T, S>) -> bool
-        where
-            T: Ord + Hash,
-        {
-            other.is_subset(self)
-        }
-
-        pub fn append(&mut self, other: &mut BTreeMultiSet<T, S>)
-        where
-            T: Ord + Hash,
-        {
-            if other.is_empty() {
-                return;
-            }
-
-            if self.is_empty() {
-                swap(self, other);
-                return;
-            }
-
-            other
-                .counter
-                .drain()
-                .for_each(|(v, c)| *self.counter.entry(v).or_insert(0) += c);
-            self.tree.append(&mut other.tree);
-            self.len += other.len;
-            other.len = 0;
-        }
+        self.tree.contains(value)
     }
 
-    impl<T, S> Default for BTreeMultiSet<T, S>
+    pub fn get<Q>(&self, value: &Q) -> Option<&T>
     where
-        T: Ord + Hash,
-        S: Default + BuildHasher,
+        T: Borrow<Q> + Ord,
+        Q: Ord + ?Sized,
     {
-        fn default() -> Self {
-            Self {
-                len: Default::default(),
-                tree: Default::default(),
-                counter: Default::default(),
-            }
-        }
+        self.tree.get(value)
     }
+}
 
-    impl<T, S> Debug for BTreeMultiSet<T, S>
+impl<T, S> BTreeMultiSet<T, S>
+where
+    S: BuildHasher,
+{
+    pub fn count<Q>(&self, value: &Q) -> usize
     where
-        T: Debug + Eq + Hash,
-        S: BuildHasher,
+        T: Borrow<Q> + Eq + Hash,
+        Q: Eq + Hash,
     {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{{")?;
-            f.debug_set().entries(self.iter()).finish()?;
-            write!(f, "}}")?;
-            Ok(())
-        }
+        self.counter.get(value).copied().unwrap_or_default()
     }
 
-    impl<T, S> PartialEq for BTreeMultiSet<T, S>
-    where
-        T: Eq + Hash,
-        S: BuildHasher,
-    {
-        fn eq(&self, other: &Self) -> bool {
-            self.len == other.len && self.counter == other.counter
-        }
-    }
-
-    impl<T, S> Eq for BTreeMultiSet<T, S>
-    where
-        T: Eq + Hash,
-        S: BuildHasher,
-    {
-    }
-
-    impl<'a, T, S> IntoIterator for &'a BTreeMultiSet<T, S>
-    where
-        T: Eq + Hash,
-        S: BuildHasher,
-    {
-        type Item = &'a T;
-
-        type IntoIter = Iter<'a, T, S>;
-
-        fn into_iter(self) -> Self::IntoIter {
-            self.iter()
-        }
-    }
-
-    impl<T, S> IntoIterator for BTreeMultiSet<T, S>
-    where
-        T: Clone + Eq + Hash,
-        S: BuildHasher,
-    {
-        type Item = T;
-
-        type IntoIter = IntoIter<T, S>;
-
-        fn into_iter(self) -> Self::IntoIter {
-            IntoIter {
-                iter: self.tree.into_iter(),
-                counter: self.counter,
-                peek: None,
-                peek_count: 0,
-            }
-        }
-    }
-
-    impl<T, S> FromIterator<T> for BTreeMultiSet<T, S>
+    pub fn insert(&mut self, value: T) -> bool
     where
         T: Clone + Ord + Hash,
-        S: Default + BuildHasher,
     {
-        fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-            let mut ret = Self::new();
-            for value in iter {
-                ret.insert(value);
+        self.len += 1;
+        *self.counter.entry(value.clone()).or_insert(0) += 1;
+        self.tree.insert(value)
+    }
+
+    pub fn remove<Q>(&mut self, value: &Q) -> bool
+    where
+        T: Borrow<Q> + Ord + Hash,
+        Q: Ord + Hash,
+    {
+        if let Some(count) = self.counter.get_mut(value) {
+            *count -= 1;
+            if *count == 0 {
+                self.tree.remove(value);
+                self.counter.remove(value);
             }
-            ret
+            true
+        } else {
+            false
         }
     }
 
-    pub struct Iter<'a, T, S> {
-        iter: btree_set::Iter<'a, T>,
-        counter: &'a HashMap<T, usize, S>,
-        peek: Option<(&'a T, &'a usize)>,
-        peek_count: usize,
+    pub fn take<Q>(&mut self, value: &Q) -> Option<T>
+    where
+        T: Borrow<Q> + Ord + Clone + Hash,
+        Q: Ord + Hash,
+    {
+        if let Some(count) = self.counter.get_mut(value) {
+            *count -= 1;
+            if *count == 0 {
+                self.counter.remove(value);
+                self.tree.take(value)
+            } else {
+                self.tree.get(value).cloned()
+            }
+        } else {
+            None
+        }
     }
 
-    pub struct IntoIter<T, S> {
-        iter: btree_set::IntoIter<T>,
-        counter: HashMap<T, usize, S>,
-        peek: Option<(T, usize)>,
-        peek_count: usize,
-    }
-
-    impl<'a, T, S> Iterator for Iter<'a, T, S>
+    pub fn iter(&self) -> Iter<'_, T, S>
     where
         T: Eq + Hash,
-        S: BuildHasher,
     {
-        type Item = &'a T;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            if self.peek.is_none() {
-                if let Some(next) = self.iter.next() {
-                    self.peek = self.counter.get_key_value(next);
-                }
-            }
-            if let Some((value, count)) = self.peek {
-                self.peek_count += 1;
-                if &self.peek_count >= count {
-                    self.peek = None;
-                    self.peek_count = 0;
-                }
-                Some(value)
-            } else {
-                None
-            }
-        }
-
-        fn size_hint(&self) -> (usize, Option<usize>) {
-            let (lower, _) = self.iter.size_hint();
-            (lower, None)
+        Iter {
+            iter: self.tree.iter(),
+            counter: &self.counter,
+            peek: None,
+            peek_count: 0,
         }
     }
 
-    impl<'a, T, S> FusedIterator for Iter<'a, T, S>
+    pub fn is_disjoint(&self, other: &BTreeMultiSet<T, S>) -> bool
     where
-        T: Eq + Hash,
-        S: BuildHasher,
+        T: Ord,
     {
+        if self.tree.len() < other.tree.len() {
+            self.tree.iter().all(|v| !other.contains(v))
+        } else {
+            other.tree.iter().all(|v| !self.contains(v))
+        }
     }
 
-    impl<T, S> Iterator for IntoIter<T, S>
+    pub fn is_subset(&self, other: &BTreeMultiSet<T, S>) -> bool
     where
-        T: Clone + Eq + Hash,
-        S: BuildHasher,
+        T: Ord + Hash,
     {
-        type Item = T;
+        self.len() <= other.len()
+            && self
+                .counter
+                .iter()
+                .all(|(value, count)| other.counter.get(value).map_or(false, |c| c >= count))
+    }
 
-        fn next(&mut self) -> Option<Self::Item> {
-            if self.peek.is_none() {
-                if let Some(next) = self.iter.next() {
-                    self.peek = self.counter.remove_entry(&next);
-                }
-            }
-            if let Some((value, count)) = self.peek.clone() {
-                self.peek_count += 1;
-                if self.peek_count >= count {
-                    self.peek = None;
-                    self.peek_count = 0;
-                }
-                Some(value)
-            } else {
-                None
-            }
+    pub fn is_superset(&self, other: &BTreeMultiSet<T, S>) -> bool
+    where
+        T: Ord + Hash,
+    {
+        other.is_subset(self)
+    }
+
+    pub fn append(&mut self, other: &mut BTreeMultiSet<T, S>)
+    where
+        T: Ord + Hash,
+    {
+        if other.is_empty() {
+            return;
         }
 
-        fn size_hint(&self) -> (usize, Option<usize>) {
-            let (lower, _) = self.iter.size_hint();
-            (lower, None)
+        if self.is_empty() {
+            swap(self, other);
+            return;
         }
+
+        other
+            .counter
+            .drain()
+            .for_each(|(v, c)| *self.counter.entry(v).or_insert(0) += c);
+        self.tree.append(&mut other.tree);
+        self.len += other.len;
+        other.len = 0;
+    }
+}
+
+impl<T, S> Default for BTreeMultiSet<T, S>
+where
+    T: Ord + Hash,
+    S: Default + BuildHasher,
+{
+    fn default() -> Self {
+        Self {
+            len: Default::default(),
+            tree: Default::default(),
+            counter: Default::default(),
+        }
+    }
+}
+
+impl<T, S> Debug for BTreeMultiSet<T, S>
+where
+    T: Debug + Eq + Hash,
+    S: BuildHasher,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{")?;
+        f.debug_set().entries(self.iter()).finish()?;
+        write!(f, "}}")?;
+        Ok(())
+    }
+}
+
+impl<T, S> PartialEq for BTreeMultiSet<T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.len == other.len && self.counter == other.counter
+    }
+}
+
+impl<T, S> Eq for BTreeMultiSet<T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+}
+
+impl<'a, T, S> IntoIterator for &'a BTreeMultiSet<T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+    type Item = &'a T;
+
+    type IntoIter = Iter<'a, T, S>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<T, S> IntoIterator for BTreeMultiSet<T, S>
+where
+    T: Clone + Eq + Hash,
+    S: BuildHasher,
+{
+    type Item = T;
+
+    type IntoIter = IntoIter<T, S>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter {
+            iter: self.tree.into_iter(),
+            counter: self.counter,
+            peek: None,
+            peek_count: 0,
+        }
+    }
+}
+
+impl<T, S> FromIterator<T> for BTreeMultiSet<T, S>
+where
+    T: Clone + Ord + Hash,
+    S: Default + BuildHasher,
+{
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut ret = Self::new();
+        for value in iter {
+            ret.insert(value);
+        }
+        ret
+    }
+}
+
+pub struct Iter<'a, T, S> {
+    iter: btree_set::Iter<'a, T>,
+    counter: &'a HashMap<T, usize, S>,
+    peek: Option<(&'a T, &'a usize)>,
+    peek_count: usize,
+}
+
+pub struct IntoIter<T, S> {
+    iter: btree_set::IntoIter<T>,
+    counter: HashMap<T, usize, S>,
+    peek: Option<(T, usize)>,
+    peek_count: usize,
+}
+
+impl<'a, T, S> Iterator for Iter<'a, T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.peek.is_none() {
+            if let Some(next) = self.iter.next() {
+                self.peek = self.counter.get_key_value(next);
+            }
+        }
+        if let Some((value, count)) = self.peek {
+            self.peek_count += 1;
+            if &self.peek_count >= count {
+                self.peek = None;
+                self.peek_count = 0;
+            }
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (lower, _) = self.iter.size_hint();
+        (lower, None)
+    }
+}
+
+impl<'a, T, S> FusedIterator for Iter<'a, T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+}
+
+impl<T, S> Iterator for IntoIter<T, S>
+where
+    T: Clone + Eq + Hash,
+    S: BuildHasher,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.peek.is_none() {
+            if let Some(next) = self.iter.next() {
+                self.peek = self.counter.remove_entry(&next);
+            }
+        }
+        if let Some((value, count)) = self.peek.clone() {
+            self.peek_count += 1;
+            if self.peek_count >= count {
+                self.peek = None;
+                self.peek_count = 0;
+            }
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (lower, _) = self.iter.size_hint();
+        (lower, None)
     }
 }
 

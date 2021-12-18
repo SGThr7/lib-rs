@@ -5,5 +5,7 @@ pub mod binary_indexed_tree;
 #[allow(unused_imports)]
 use binary_indexed_tree::{BinaryIndexedTree, BIT};
 
-pub mod segment_tree;
+#[cfg_attr(nightly, codesnip::entry("UnionFind"))]
 pub mod union_find;
+
+pub mod segment_tree;

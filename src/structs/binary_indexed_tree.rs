@@ -10,7 +10,7 @@ use std::ops::{RangeFull, RangeTo, RangeToInclusive};
 ///
 /// ```
 /// use lib_rust::structs::binary_indexed_tree::BinaryIndexedTree;
-/// use lib_rust::math::num::alge_struct::monoid::AddMonoid;
+/// use lib_rust::math::num::alge_struct::types::AddMonoid;
 ///
 /// let bit = BinaryIndexedTree::<AddMonoid<_>>::from(vec![1, 2, 3]);
 /// ```
@@ -73,7 +73,7 @@ impl<T: Monoid> BinaryIndexedTree<T> {
     ///
     /// ```
     /// # use lib_rust::structs::binary_indexed_tree::BinaryIndexedTree;
-    /// use lib_rust::math::num::alge_struct::monoid::AddMonoid;
+    /// use lib_rust::math::num::alge_struct::types::AddMonoid;
     ///
     /// let bit = BinaryIndexedTree::<AddMonoid<_>>::from(vec![1, 2, 3, 4]);
     /// assert_eq!(bit.fold(..2), 3);
@@ -94,7 +94,7 @@ impl<T: Monoid> BinaryIndexedTree<T> {
     ///
     /// ```
     /// # use lib_rust::structs::binary_indexed_tree::BinaryIndexedTree;
-    /// use lib_rust::math::num::alge_struct::monoid::AddMonoid;
+    /// use lib_rust::math::num::alge_struct::types::AddMonoid;
     ///
     /// let mut bit = BinaryIndexedTree::<AddMonoid<_>>::from(vec![1, 2, 3, 4]);
     /// bit.operate(2, &5);

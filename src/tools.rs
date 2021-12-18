@@ -1,7 +1,13 @@
-pub mod abs_pow;
+#[cfg_attr(nightly, codesnip::entry("AbsSub"))]
 pub mod abs_sub;
+
+#[cfg_attr(nightly, codesnip::entry("Bisect"))]
 pub mod bisect;
-pub mod matrix_ops;
+
+#[cfg_attr(nightly, codesnip::entry("MinMax"))]
 pub mod min_max;
+
+pub mod abs_pow;
+pub mod matrix_ops;
 pub mod mod_pow;
 pub mod option_ord;

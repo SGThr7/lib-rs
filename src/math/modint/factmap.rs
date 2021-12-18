@@ -1,177 +1,149 @@
-use super::{ModInt, ModInt1e9_7, ModInt998244353, Modulo};
+use super::{ModInt, Modulo};
 
-#[codesnip::entry("ModIntFactMap1e9_7", include("ModIntFactMap", "ModInt1e9_7"))]
-pub type FactMap1e9_7 = ModIntFactMap<ModInt1e9_7>;
+type Set = usize;
 
-#[codesnip::entry("ModIntFactMap998244353", include("ModIntFactMap", "ModInt998244353"))]
-pub type FactMap998244353 = ModIntFactMap<ModInt998244353>;
+#[derive(Clone, Debug)]
+pub struct ModIntFactMap<M> {
+    len: usize,
+    recip: Vec<ModInt<M>>,
+    factorial: Vec<ModInt<M>>,
+    recip_fact: Vec<ModInt<M>>,
+}
 
-#[codesnip::entry("ModIntFactMap")]
-pub use modint_factmap_impl::ModIntFactMap;
+impl<M> ModIntFactMap<M> {
+    const MIN_LEN: usize = 1;
 
-#[codesnip::entry("ModIntFactMap", include("ModInt", "Modulo"))]
-mod modint_factmap_impl {
-    use super::{ModInt, Modulo};
-    use core::fmt;
-
-    type Set = usize;
-
-    #[derive(Clone)]
-    pub struct ModIntFactMap<M> {
-        len: usize,
-        recip: Vec<ModInt<M>>,
-        factorial: Vec<ModInt<M>>,
-        recip_fact: Vec<ModInt<M>>,
+    pub fn len(&self) -> usize {
+        self.len
     }
 
-    impl<M> ModIntFactMap<M> {
-        const MIN_LEN: usize = 1;
+    pub fn get_recip(&self, x: usize) -> Option<&ModInt<M>> {
+        self.recip.get(x)
+    }
 
-        pub fn len(&self) -> usize {
-            self.len
+    pub fn get_factorial(&self, x: usize) -> Option<&ModInt<M>> {
+        self.factorial.get(x)
+    }
+
+    pub fn get_recip_fact(&self, x: usize) -> Option<&ModInt<M>> {
+        self.recip_fact.get(x)
+    }
+}
+
+impl<M: Clone + Modulo<Set = Set>> ModIntFactMap<M> {
+    pub fn new(size: usize) -> Self {
+        let len = size.max(Self::MIN_LEN) + 1;
+
+        let mut recip = Vec::with_capacity(len);
+        recip.push(ModInt::<M>::zero());
+        recip.push(ModInt::<M>::one());
+
+        let mut factorial = Vec::with_capacity(len);
+        factorial.push(ModInt::<M>::one());
+        factorial.push(ModInt::<M>::one());
+
+        let mut recip_fact = Vec::with_capacity(len);
+        recip_fact.push(ModInt::<M>::one());
+        recip_fact.push(ModInt::<M>::one());
+
+        let mut ret = Self {
+            len: 2,
+            recip,
+            factorial,
+            recip_fact,
+        };
+        ret.increase(len - 2);
+        ret
+    }
+
+    pub fn increase(&mut self, additional: usize) {
+        assert!(self.len() + additional - 1 <= M::MOD);
+        self.recip.reserve_exact(additional);
+        self.factorial.reserve_exact(additional);
+        self.recip_fact.reserve_exact(additional);
+
+        for d in 0..additional {
+            let i = self.len() + d;
+            // P = ⌊P/i⌋×i + P%i
+            // 0 ≡ ⌊P/i⌋×i + P%i (mod P)
+            // 0 ≡ ⌊P/i⌋ + (P%i)×i⁻¹ (mod P)
+            // -⌊P/i⌋ ≡ (P%i)×i⁻¹ (mod P)
+            // i⁻¹ ≡ -⌊P/i⌋ × (P%i)⁻¹ (mod P)
+            // i⁻¹ ≡ -(P%i)⁻¹ × ⌊P/i⌋ (mod P)
+            self.recip
+                .push(-self.recip[M::MOD % i].clone() * (M::MOD / i));
+            self.factorial.push(self.factorial[i - 1].clone() * i);
+            self.recip_fact
+                .push(self.recip_fact[i - 1].clone() * self.recip[i].clone());
         }
+        self.len += additional;
+    }
 
-        pub fn get_recip(&self, x: usize) -> Option<&ModInt<M>> {
-            self.recip.get(x)
-        }
-
-        pub fn get_factorial(&self, x: usize) -> Option<&ModInt<M>> {
-            self.factorial.get(x)
-        }
-
-        pub fn get_recip_fact(&self, x: usize) -> Option<&ModInt<M>> {
-            self.recip_fact.get(x)
+    pub fn increase_to(&mut self, x: usize) {
+        if x >= self.len() {
+            self.increase(x + 1 - self.len())
         }
     }
 
-    impl<M: Clone + Modulo<Set = Set>> ModIntFactMap<M> {
-        pub fn new(size: usize) -> Self {
-            let len = size.max(Self::MIN_LEN) + 1;
-
-            let mut recip = Vec::with_capacity(len);
-            recip.push(ModInt::<M>::zero());
-            recip.push(ModInt::<M>::one());
-
-            let mut factorial = Vec::with_capacity(len);
-            factorial.push(ModInt::<M>::one());
-            factorial.push(ModInt::<M>::one());
-
-            let mut recip_fact = Vec::with_capacity(len);
-            recip_fact.push(ModInt::<M>::one());
-            recip_fact.push(ModInt::<M>::one());
-
-            let mut ret = Self {
-                len: 2,
-                recip,
-                factorial,
-                recip_fact,
-            };
-            ret.increase(len - 2);
-            ret
+    pub fn recip(&mut self, x: usize) -> ModInt<M> {
+        if x < self.len() {
+            self.recip[x].clone()
+        } else {
+            self.increase_to(x);
+            self.recip[x].clone()
         }
+    }
 
-        pub fn increase(&mut self, additional: usize) {
-            assert!(self.len() + additional - 1 <= M::MOD);
-            self.recip.reserve_exact(additional);
-            self.factorial.reserve_exact(additional);
-            self.recip_fact.reserve_exact(additional);
-
-            for d in 0..additional {
-                let i = self.len() + d;
-                // P = ⌊P/i⌋×i + P%i
-                // 0 ≡ ⌊P/i⌋×i + P%i (mod P)
-                // 0 ≡ ⌊P/i⌋ + (P%i)×i⁻¹ (mod P)
-                // -⌊P/i⌋ ≡ (P%i)×i⁻¹ (mod P)
-                // i⁻¹ ≡ -⌊P/i⌋ × (P%i)⁻¹ (mod P)
-                // i⁻¹ ≡ -(P%i)⁻¹ × ⌊P/i⌋ (mod P)
-                self.recip
-                    .push(-self.recip[M::MOD % i].clone() * (M::MOD / i));
-                self.factorial.push(self.factorial[i - 1].clone() * i);
-                self.recip_fact
-                    .push(self.recip_fact[i - 1].clone() * self.recip[i].clone());
-            }
-            self.len += additional;
+    pub fn factorial(&mut self, x: usize) -> ModInt<M> {
+        if x < self.len() {
+            self.factorial[x].clone()
+        } else {
+            self.increase_to(x);
+            self.factorial[x].clone()
         }
+    }
 
-        pub fn increase_to(&mut self, x: usize) {
-            if x >= self.len() {
-                self.increase(x + 1 - self.len())
-            }
+    pub fn recip_fact(&mut self, x: usize) -> ModInt<M> {
+        if x < self.len() {
+            self.recip_fact[x].clone()
+        } else {
+            self.increase_to(x);
+            self.recip_fact[x].clone()
         }
+    }
 
-        pub fn recip(&mut self, x: usize) -> ModInt<M> {
-            if x < self.len() {
-                self.recip[x].clone()
+    pub fn get_combination(&self, n: usize, k: usize) -> Option<ModInt<M>> {
+        if n < k {
+            None
+        } else if k == 0 || n == k {
+            Some(ModInt::<M>::one())
+        } else {
+            let ni = self.get_factorial(n);
+            let kii = self.get_recip_fact(k);
+            let nkii = self.get_recip_fact(n - k);
+            if let (Some(ni), Some(kii), Some(nkii)) = (ni.cloned(), kii.cloned(), nkii.cloned()) {
+                Some(ni * kii * nkii)
             } else {
-                self.increase_to(x);
-                self.recip[x].clone()
-            }
-        }
-
-        pub fn factorial(&mut self, x: usize) -> ModInt<M> {
-            if x < self.len() {
-                self.factorial[x].clone()
-            } else {
-                self.increase_to(x);
-                self.factorial[x].clone()
-            }
-        }
-
-        pub fn recip_fact(&mut self, x: usize) -> ModInt<M> {
-            if x < self.len() {
-                self.recip_fact[x].clone()
-            } else {
-                self.increase_to(x);
-                self.recip_fact[x].clone()
-            }
-        }
-
-        pub fn get_combination(&self, n: usize, k: usize) -> Option<ModInt<M>> {
-            if n < k {
                 None
-            } else if k == 0 || n == k {
-                Some(ModInt::<M>::one())
-            } else {
-                let ni = self.get_factorial(n);
-                let kii = self.get_recip_fact(k);
-                let nkii = self.get_recip_fact(n - k);
-                if let (Some(ni), Some(kii), Some(nkii)) =
-                    (ni.cloned(), kii.cloned(), nkii.cloned())
-                {
-                    Some(ni * kii * nkii)
-                } else {
-                    None
-                }
             }
-        }
-
-        pub fn combination(&mut self, n: usize, k: usize) -> ModInt<M> {
-            assert!(n >= k);
-            let ni = self.factorial(n);
-            let kii = self.recip_fact(k);
-            let nkii = self.recip_fact(n - k);
-
-            ni * kii * nkii
-        }
-
-        pub fn get_multi_choose(&self, n: usize, k: usize) -> Option<ModInt<M>> {
-            self.get_combination(n + k - 1, k)
-        }
-
-        pub fn multi_choose(&mut self, n: usize, k: usize) -> ModInt<M> {
-            self.combination(n + k - 1, k)
         }
     }
 
-    impl<M: fmt::Debug> fmt::Debug for ModIntFactMap<M> {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.debug_struct("ModIntFactMap")
-                .field("len", &self.len)
-                .field("recip", &self.recip)
-                .field("factorial", &self.factorial)
-                .field("recip_fact", &self.recip_fact)
-                .finish()
-        }
+    pub fn combination(&mut self, n: usize, k: usize) -> ModInt<M> {
+        assert!(n >= k);
+        let ni = self.factorial(n);
+        let kii = self.recip_fact(k);
+        let nkii = self.recip_fact(n - k);
+
+        ni * kii * nkii
+    }
+
+    pub fn get_multi_choose(&self, n: usize, k: usize) -> Option<ModInt<M>> {
+        self.get_combination(n + k - 1, k)
+    }
+
+    pub fn multi_choose(&mut self, n: usize, k: usize) -> ModInt<M> {
+        self.combination(n + k - 1, k)
     }
 }
 

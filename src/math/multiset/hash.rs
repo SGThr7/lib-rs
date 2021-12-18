@@ -1,256 +1,245 @@
-#[codesnip::entry("HashMultiSet")]
-pub use hash_multiset::HashMultiSet;
+use core::borrow::Borrow;
+use core::fmt::{Debug, Formatter, Result};
+use core::hash::{BuildHasher, Hash};
+use core::iter::{FromIterator, FusedIterator};
+use std::collections::hash_map::{self, HashMap, RandomState};
 
-#[codesnip::entry("HashMultiSet")]
-pub mod hash_multiset {
-    use core::{
-        borrow::Borrow,
-        fmt::{Debug, Formatter, Result},
-        hash::{BuildHasher, Hash},
-        iter::{FromIterator, FusedIterator},
-    };
-    use std::collections::{
-        hash_map::{self, RandomState},
-        HashMap,
-    };
-
-    pub struct HashMultiSet<T, S = RandomState> {
-        len: usize,
-        counter: HashMap<T, usize, S>,
-    }
-
-    impl<T, S> HashMultiSet<T, S> {
-        pub fn len(&self) -> usize {
-            self.len
-        }
-
-        pub fn is_empty(&self) -> bool {
-            self.len() == 0
-        }
-
-        pub fn clear(&mut self) {
-            self.len = 0;
-            self.counter.clear();
-        }
-
-        pub fn iter(&self) -> Iter<'_, T> {
-            Iter {
-                iter: self.counter.iter(),
-                peek: None,
-                peek_count: 0,
-            }
-        }
-    }
-
-    impl<T, S> HashMultiSet<T, S>
-    where
-        T: Eq + Hash,
-        S: BuildHasher,
-    {
-        pub fn new() -> Self
-        where
-            S: Default,
-        {
-            Default::default()
-        }
-
-        pub fn insert(&mut self, value: T) {
-            self.insert_times(value, 1)
-        }
-
-        pub fn insert_times(&mut self, value: T, count: usize) {
-            self.len += count;
-            *self.counter.entry(value).or_insert(0) += count
-        }
-
-        pub fn remove<Q>(&mut self, value: &Q) -> bool
-        where
-            T: Borrow<Q>,
-            Q: Eq + Hash,
-        {
-            self.remove_times(value, 1) > 0
-        }
-
-        pub fn remove_times<Q>(&mut self, value: &Q, count: usize) -> usize
-        where
-            T: Borrow<Q>,
-            Q: Eq + Hash,
-        {
-            if let Some(c) = self.counter.get(value) {
-                if *c > count {
-                    self.len -= count;
-                    *self.counter.get_mut(value).unwrap() -= count;
-                    count
-                } else {
-                    let t = self.counter.remove(value).unwrap();
-                    self.len -= t;
-                    t
-                }
-            } else {
-                0
-            }
-        }
-
-        pub fn count<Q>(&self, value: &Q) -> Option<usize>
-        where
-            T: Borrow<Q>,
-            Q: Eq + Hash,
-        {
-            self.counter.get(value).copied()
-        }
-    }
-
-    impl<T: Clone + Debug, S> Debug for HashMultiSet<T, S> {
-        fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-            write!(f, "{{")?;
-            f.debug_set().entries(self.iter()).finish()?;
-            write!(f, "}}")?;
-            Ok(())
-        }
-    }
-
-    impl<T, S> Default for HashMultiSet<T, S>
-    where
-        T: Eq + Hash,
-        S: Default + BuildHasher,
-    {
-        fn default() -> Self {
-            Self {
-                counter: Default::default(),
-                len: Default::default(),
-            }
-        }
-    }
-
-    impl<T, S> PartialEq for HashMultiSet<T, S>
-    where
-        T: Eq + Hash,
-        S: BuildHasher,
-    {
-        fn eq(&self, other: &Self) -> bool {
-            self.len == other.len && self.counter == other.counter
-        }
-    }
-    impl<T, S> Eq for HashMultiSet<T, S>
-    where
-        T: Eq + Hash,
-        S: BuildHasher,
-    {
-    }
-
-    impl<'a, T, S> IntoIterator for &'a HashMultiSet<T, S> {
-        type Item = &'a T;
-        type IntoIter = Iter<'a, T>;
-        fn into_iter(self) -> Self::IntoIter {
-            self.iter()
-        }
-    }
-
-    impl<T> FromIterator<T> for HashMultiSet<T>
-    where
-        T: Eq + Hash,
-    {
-        fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-            let mut ret = Self::new();
-            for value in iter {
-                ret.insert(value);
-            }
-            ret
-        }
-    }
-
-    #[derive(Debug)]
-    pub struct Iter<'a, T> {
-        iter: hash_map::Iter<'a, T, usize>,
-        peek: Option<(&'a T, &'a usize)>,
-        peek_count: usize,
-    }
-
-    #[derive(Debug)]
-    pub struct IntoIter<T> {
-        iter: hash_map::IntoIter<T, usize>,
-        peek: Option<(T, usize)>,
-        peek_count: usize,
-    }
-
-    impl<'a, T> Iterator for Iter<'a, T> {
-        type Item = &'a T;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            if self.peek.is_none() {
-                self.peek = self.iter.next();
-            }
-            if let Some((value, count)) = self.peek {
-                self.peek_count += 1;
-                if &self.peek_count >= count {
-                    self.peek = None;
-                    self.peek_count = 0;
-                }
-                Some(value)
-            } else {
-                None
-            }
-        }
-
-        fn size_hint(&self) -> (usize, Option<usize>) {
-            let (lower, _) = self.iter.size_hint();
-            (lower, None)
-        }
-
-        fn count(self) -> usize
-        where
-            Self: Sized,
-        {
-            self.iter.fold(0, |acc, (_, count)| acc + count) - self.peek_count
-        }
-    }
-
-    impl<T> FusedIterator for Iter<'_, T> {}
-
-    impl<T> Clone for Iter<'_, T> {
-        fn clone(&self) -> Self {
-            Self {
-                iter: self.iter.clone(),
-                peek: self.peek.clone(),
-                peek_count: self.peek_count,
-            }
-        }
-    }
-
-    impl<T: Clone> Iterator for IntoIter<T> {
-        type Item = T;
-
-        fn next(&mut self) -> Option<Self::Item> {
-            if self.peek.is_none() {
-                self.peek = self.iter.next();
-            }
-            if let Some((value, count)) = self.peek.clone() {
-                self.peek_count += 1;
-                if self.peek_count >= count {
-                    self.peek = None;
-                    self.peek_count = 0;
-                }
-                Some(value)
-            } else {
-                None
-            }
-        }
-
-        fn size_hint(&self) -> (usize, Option<usize>) {
-            let (lower, _) = self.iter.size_hint();
-            (lower, None)
-        }
-
-        fn count(self) -> usize
-        where
-            Self: Sized,
-        {
-            self.iter.fold(0, |acc, (_, count)| acc + count) - self.peek_count
-        }
-    }
-
-    impl<T: Clone> FusedIterator for IntoIter<T> {}
+pub struct HashMultiSet<T, S = RandomState> {
+    len: usize,
+    counter: HashMap<T, usize, S>,
 }
+
+impl<T, S> HashMultiSet<T, S> {
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn clear(&mut self) {
+        self.len = 0;
+        self.counter.clear();
+    }
+
+    pub fn iter(&self) -> Iter<'_, T> {
+        Iter {
+            iter: self.counter.iter(),
+            peek: None,
+            peek_count: 0,
+        }
+    }
+}
+
+impl<T, S> HashMultiSet<T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+    pub fn new() -> Self
+    where
+        S: Default,
+    {
+        Default::default()
+    }
+
+    pub fn insert(&mut self, value: T) {
+        self.insert_times(value, 1)
+    }
+
+    pub fn insert_times(&mut self, value: T, count: usize) {
+        self.len += count;
+        *self.counter.entry(value).or_insert(0) += count
+    }
+
+    pub fn remove<Q>(&mut self, value: &Q) -> bool
+    where
+        T: Borrow<Q>,
+        Q: Eq + Hash,
+    {
+        self.remove_times(value, 1) > 0
+    }
+
+    pub fn remove_times<Q>(&mut self, value: &Q, count: usize) -> usize
+    where
+        T: Borrow<Q>,
+        Q: Eq + Hash,
+    {
+        if let Some(c) = self.counter.get(value) {
+            if *c > count {
+                self.len -= count;
+                *self.counter.get_mut(value).unwrap() -= count;
+                count
+            } else {
+                let t = self.counter.remove(value).unwrap();
+                self.len -= t;
+                t
+            }
+        } else {
+            0
+        }
+    }
+
+    pub fn count<Q>(&self, value: &Q) -> Option<usize>
+    where
+        T: Borrow<Q>,
+        Q: Eq + Hash,
+    {
+        self.counter.get(value).copied()
+    }
+}
+
+impl<T: Clone + Debug, S> Debug for HashMultiSet<T, S> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(f, "{{")?;
+        f.debug_set().entries(self.iter()).finish()?;
+        write!(f, "}}")?;
+        Ok(())
+    }
+}
+
+impl<T, S> Default for HashMultiSet<T, S>
+where
+    T: Eq + Hash,
+    S: Default + BuildHasher,
+{
+    fn default() -> Self {
+        Self {
+            counter: Default::default(),
+            len: Default::default(),
+        }
+    }
+}
+
+impl<T, S> PartialEq for HashMultiSet<T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.len == other.len && self.counter == other.counter
+    }
+}
+impl<T, S> Eq for HashMultiSet<T, S>
+where
+    T: Eq + Hash,
+    S: BuildHasher,
+{
+}
+
+impl<'a, T, S> IntoIterator for &'a HashMultiSet<T, S> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<T> FromIterator<T> for HashMultiSet<T>
+where
+    T: Eq + Hash,
+{
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut ret = Self::new();
+        for value in iter {
+            ret.insert(value);
+        }
+        ret
+    }
+}
+
+#[derive(Debug)]
+pub struct Iter<'a, T> {
+    iter: hash_map::Iter<'a, T, usize>,
+    peek: Option<(&'a T, &'a usize)>,
+    peek_count: usize,
+}
+
+#[derive(Debug)]
+pub struct IntoIter<T> {
+    iter: hash_map::IntoIter<T, usize>,
+    peek: Option<(T, usize)>,
+    peek_count: usize,
+}
+
+impl<'a, T> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.peek.is_none() {
+            self.peek = self.iter.next();
+        }
+        if let Some((value, count)) = self.peek {
+            self.peek_count += 1;
+            if &self.peek_count >= count {
+                self.peek = None;
+                self.peek_count = 0;
+            }
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (lower, _) = self.iter.size_hint();
+        (lower, None)
+    }
+
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.iter.fold(0, |acc, (_, count)| acc + count) - self.peek_count
+    }
+}
+
+impl<T> FusedIterator for Iter<'_, T> {}
+
+impl<T> Clone for Iter<'_, T> {
+    fn clone(&self) -> Self {
+        Self {
+            iter: self.iter.clone(),
+            peek: self.peek.clone(),
+            peek_count: self.peek_count,
+        }
+    }
+}
+
+impl<T: Clone> Iterator for IntoIter<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.peek.is_none() {
+            self.peek = self.iter.next();
+        }
+        if let Some((value, count)) = self.peek.clone() {
+            self.peek_count += 1;
+            if self.peek_count >= count {
+                self.peek = None;
+                self.peek_count = 0;
+            }
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (lower, _) = self.iter.size_hint();
+        (lower, None)
+    }
+
+    fn count(self) -> usize
+    where
+        Self: Sized,
+    {
+        self.iter.fold(0, |acc, (_, count)| acc + count) - self.peek_count
+    }
+}
+
+impl<T: Clone> FusedIterator for IntoIter<T> {}
 
 #[cfg(test)]
 mod tests {
