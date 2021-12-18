@@ -1,5 +1,6 @@
+use core::fmt::Debug;
 use core::hash::Hash;
-use core::iter::{FromIterator, FusedIterator};
+use core::iter::{FromIterator, FusedIterator, Inspect};
 use core::num::Wrapping;
 use std::collections::HashMap;
 
@@ -58,6 +59,31 @@ pub trait IteratorEx: Iterator {
         Self: Sized,
     {
         as_isize(self)
+    }
+
+    /// Output iterator values.
+    /// It is equivalent to `iter.inspect(|v| { dbg!(v); })`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use lib_rust::extends::iterator::IteratorEx;
+    /// let v = vec![1, 2, 3];
+    ///
+    /// let sum = v.iter()
+    ///     .map(|x| x * 2)
+    /// // Outputs `2, 4, 6`.
+    ///     .dbg()
+    ///     .sum::<usize>();
+    /// ```
+    fn dbg(self) -> Inspect<Self, fn(&Self::Item)>
+    where
+        Self: Sized,
+        Self::Item: Debug,
+    {
+        self.inspect(|v| {
+            dbg!(v);
+        })
     }
 }
 
