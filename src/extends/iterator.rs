@@ -74,7 +74,7 @@ pub trait IteratorEx: Iterator {
     ///     .map(|x| x * 2)
     /// // Outputs `2, 4, 6`.
     ///     .dbg()
-    ///     .sum::<usize>();
+    ///     .sum::<i32>();
     /// ```
     fn dbg(self) -> Inspect<Self, fn(&Self::Item)>
     where
