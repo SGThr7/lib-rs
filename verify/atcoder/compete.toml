@@ -1,0 +1,21 @@
+test-suite = "{{ manifest_dir }}/testcases/{{ bin_alias }}.yml"
+
+[template]
+src = '''
+fn main() {
+	todo!()
+}
+'''
+
+# e.g. https://atcoder.jp/contests/abs/tasks/practice_1
+[add]
+url = "{{ args[0] }}"
+bin-name = '{% assign s = args[0] | split: "/" %}{{ s[6] }}'
+
+[test]
+toolchain = "1.42.0-x86_64-apple-darwin"
+# profile = "release"
+
+[submit.transpile]
+kind = "command"
+args = ["cargo", "equip", "--mine", "github.com/sgthr7", "--remove", "docs", "--minify", "libs", "--exclude-atcoder-crates", "--bin", "{{ bin_name }}"]

@@ -1,0 +1,14 @@
+[package]
+name = "atcoder"
+version = "0.1.0"
+authors = ["SGThr7 <sgthr7@gmail.com>"]
+edition = "2018"
+
+[package.metadata.cargo-compete.bin]
+unionfind_a = { problem = "https://atcoder.jp/contests/atc001/tasks/unionfind_a"}
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+proconio = "0.3.8"
+sgthr7-lib-unionfind = { path = "../../crates/union-find" }

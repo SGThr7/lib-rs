@@ -14,4 +14,5 @@ codesnip = { git = "https://github.com/to-omer/codesnip.git", package = "codesni
 [workspace]
 members = [
 	"crates/*",
+	"verify/*",
 ]
