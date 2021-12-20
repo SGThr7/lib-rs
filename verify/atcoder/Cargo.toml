@@ -11,4 +11,4 @@ unionfind_a = { problem = "https://atcoder.jp/contests/atc001/tasks/unionfind_a"
 
 [dependencies]
 proconio = "0.3.8"
-sgthr7-lib-unionfind = { path = "../../crates/union-find" }
+sgthr7-lib-unionfind = { path = "../../crates/unionfind" }
