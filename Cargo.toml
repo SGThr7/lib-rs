@@ -1,18 +1,8 @@
-[package]
-name = "lib-rust"
-version = "0.1.0"
-authors = ["SGThr7 <sgthr7@gmail.com>"]
-edition = "2018"
-license = "MIT"
-publish = false
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-codesnip = { git = "https://github.com/to-omer/codesnip.git", package = "codesnip_attr" }
-
 [workspace]
 members = [
 	"crates/*",
 	"verify/*",
+]
+default-members = [
+	"crates/*",
 ]
