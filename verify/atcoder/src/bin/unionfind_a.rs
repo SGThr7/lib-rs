@@ -1,5 +1,5 @@
 use proconio::input;
-use sgthr7_lib_unionfind::UnionFind;
+use unionfind::UnionFind;
 
 fn main() {
     input!(n: usize, query: [(u8, usize, usize)]);

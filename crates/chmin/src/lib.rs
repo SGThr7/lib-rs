@@ -3,7 +3,7 @@
 /// # Examples
 ///
 /// ```
-/// use sgthr7_lib_chmin::chmin;
+/// use chmin::chmin;
 ///
 /// let mut x = 10;
 ///

@@ -5,6 +5,7 @@ edition = "2018"
 authors = ["SGThr7 <sgthr7@gmail.com>"]
 license = "MIT"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "chmin"
 
 [dependencies]

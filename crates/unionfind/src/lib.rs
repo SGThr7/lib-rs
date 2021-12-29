@@ -25,7 +25,7 @@ impl UnionFind {
     /// # Examples
     ///
     /// ```
-    /// # use sgthr7_lib_unionfind::UnionFind;
+    /// # use unionfind::UnionFind;
     /// let mut uf = UnionFind::new(3);
     ///
     /// assert!( uf.equiv(0, 0));
@@ -46,7 +46,7 @@ impl UnionFind {
     /// # Examples
     ///
     /// ```
-    /// # use sgthr7_lib_unionfind::UnionFind;
+    /// # use unionfind::UnionFind;
     /// let mut uf = UnionFind::new(3);
     ///
     /// uf.union(0, 2);
@@ -83,7 +83,7 @@ impl UnionFind {
     /// # Examples
     ///
     /// ```
-    /// # use sgthr7_lib_unionfind::UnionFind;
+    /// # use unionfind::UnionFind;
     /// let mut uf = UnionFind::new(3);
     ///
     /// assert_ne!(uf.find_root(0), uf.find_root(1));
@@ -118,7 +118,7 @@ impl UnionFind {
     ///
     /// # Examples
     /// ```
-    /// # use sgthr7_lib_unionfind::UnionFind;
+    /// # use unionfind::UnionFind;
     /// let mut uf = UnionFind::new(5);
     ///
     /// assert_eq!(uf.get_size(2), 1);

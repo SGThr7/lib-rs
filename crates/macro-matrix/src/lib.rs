@@ -3,7 +3,7 @@
 /// # Examples
 ///
 /// ```
-/// use sgthr7_lib_macro_matrix::mat;
+/// use macro_matrix::mat;
 ///
 /// let m = mat![1; 2, 3];
 ///

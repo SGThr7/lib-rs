@@ -3,7 +3,7 @@
 /// # Examples
 ///
 /// ```
-/// use sgthr7_lib_chmax::chmax;
+/// use chmax::chmax;
 ///
 /// let mut x = 10;
 ///

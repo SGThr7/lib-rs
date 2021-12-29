@@ -6,7 +6,7 @@ pub trait IterExCounts: Iterator {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_iterex_counts::IterExCounts;
+    /// use iterex_counts::IterExCounts;
     ///
     /// let counts = [1, 1, 1, 3, 3, 5].into_iter().counts();
     ///

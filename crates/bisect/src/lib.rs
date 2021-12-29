@@ -17,7 +17,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [1, 2, 3, 4, 4, 4, 6, 7, 7, 8];
     ///
@@ -34,7 +34,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [1, 2, 3, 4, 4, 4, 6, 7, 7, 8];
     ///
@@ -54,7 +54,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [(2, 0), (1, 1), (4, 1), (7, 2), (4, 3),
     ///          (8, 3), (3, 8), (6, 13), (4, 20), (7, 57)];
@@ -78,7 +78,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [1, 2, 3, 4, 4, 4, 6, 7, 7, 8];
     ///
@@ -100,7 +100,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [1, 2, 3, 4, 4, 4, 6, 7, 7, 8];
     ///
@@ -122,7 +122,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [(2, 0), (1, 1), (4, 1), (7, 2), (4, 3),
     ///          (8, 3), (3, 8), (6, 13), (4, 20), (7, 57)];
@@ -146,7 +146,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [1, 2, 3, 4, 4, 4, 6, 7, 7, 8];
     ///
@@ -168,7 +168,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [1, 2, 3, 4, 4, 4, 6, 7, 7, 8];
     ///
@@ -190,7 +190,7 @@ pub trait Bisect {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [(2, 0), (1, 1), (4, 1), (7, 2), (4, 3),
     ///          (8, 3), (3, 8), (6, 13), (4, 20), (7, 57)];
@@ -216,7 +216,7 @@ pub trait Bisect {
     /// # Example
     ///
     /// ```
-    /// use sgthr7_lib_bisect::Bisect;
+    /// use bisect::Bisect;
     ///
     /// let v = [1, 2, 3, 3, 5, 6, 7];
     ///
@@ -261,7 +261,7 @@ pub trait RangeBisect<Idx> {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::RangeBisect;
+    /// use bisect::RangeBisect;
     /// let i = (7_usize..13).find_range_by(|i| (i / 10).cmp(&1));
     ///
     /// assert_eq!(i, 10..13);
@@ -273,7 +273,7 @@ pub trait RangeBisect<Idx> {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::RangeBisect;
+    /// use bisect::RangeBisect;
     /// let i = (7_usize..13).lower_bound_by(|i| (i / 10).cmp(&1));
     ///
     /// assert_eq!(i, 10);
@@ -287,7 +287,7 @@ pub trait RangeBisect<Idx> {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::RangeBisect;
+    /// use bisect::RangeBisect;
     /// let i = (7_usize..13).upper_bound_by(|i| (i / 10).cmp(&1));
     ///
     /// assert_eq!(i, 13);
@@ -311,7 +311,7 @@ pub trait RangeBisect<Idx> {
     /// # Examples
     ///
     /// ```
-    /// use sgthr7_lib_bisect::RangeBisect;
+    /// use bisect::RangeBisect;
     ///
     /// let target = 1700;
     /// let max = 1e7 as usize;

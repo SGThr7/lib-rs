@@ -1,5 +1,5 @@
+use bisect::Bisect;
 use proconio::input;
-use sgthr7_lib_bisect::Bisect;
 
 fn main() {
     input!(n: usize, k: usize, ar: [usize; n]);
