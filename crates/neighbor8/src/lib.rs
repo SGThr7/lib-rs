@@ -1,3 +1,23 @@
+/// Iterate 8 neighbor.
+///
+/// # Examples
+///
+/// ```
+/// use neighbor8::neighbor8;
+/// use std::collections::HashSet;
+///
+/// let mat = vec![
+///     vec![0, 1, 2],
+///     vec![3, 4, 5],
+///     vec![6, 7, 8],
+/// ];
+///
+/// let set = neighbor8!(1, 1)
+///     .map(|(x, y)| mat[x][y])
+///     .collect::<HashSet<_>>();
+///
+/// assert_eq!(set, HashSet::from([0, 1, 2, 3, 5, 6, 7, 8]));
+/// ```
 #[macro_export]
 macro_rules! neighbor8 {
     ($x:expr, $y:expr) => { $crate::neighbor8!(($x, $y)) };
