@@ -23,3 +23,14 @@ macro_rules! mat {
         vec![$crate::mat![$e; $($ntail),*]; $nhead]
     };
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn mat() {
+        let t = mat![3; 3, 4];
+        assert_eq!(t.len(), 3);
+        assert!(t.iter().all(|v| v.len() == 4));
+        assert!(t.iter().flatten().all(|x| *x == 3));
+    }
+}
