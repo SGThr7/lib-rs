@@ -1,0 +1,11 @@
+[package]
+name = "sgthr7-lib-neighbor8"
+version = "0.1.0"
+edition = "2018"
+authors = ["SGThr7 <sgthr7@gmail.com>"]
+license = "MIT"
+
+[lib]
+name = "neighbor8"
+
+[dependencies]
