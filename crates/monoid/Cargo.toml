@@ -1,0 +1,12 @@
+[package]
+name = "sgthr7-lib-monoid"
+version = "0.1.0"
+edition = "2018"
+authors = ["SGThr7 <sgthr7@gmail.com>"]
+license = "MIT"
+
+[lib]
+name = "monoid"
+
+[dependencies]
+sgthr7-lib-num-traits = { path = "../num-traits" }
