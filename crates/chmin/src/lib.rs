@@ -1,4 +1,4 @@
-/// Replace with minimam one.
+/// Replace with minimum one.
 ///
 /// # Examples
 ///

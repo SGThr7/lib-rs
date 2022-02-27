@@ -5,8 +5,8 @@
 /// [`Copy`]: std::marker::Copy
 #[macro_export]
 macro_rules! forward_ref_binop {
-    (impl $(<$($generi:tt $(: $path1:tt $(+ $pathn:tt)*)?),* $(,)?>)? $trait:ident, $fn:ident for $t:ty, $u:ty) => {
-        impl $(< $($generi $(: $path1 $(+ $pathn)*)?),* >)? $trait<$u> for &$t {
+    (impl $(<$($T:tt $(: $path_1:tt $(+ $path_n:tt)*)?),* $(,)?>)? $trait:ident, $fn:ident for $t:ty, $u:ty) => {
+        impl $(< $($T $(: $path_1 $(+ $path_n)*)?),* >)? $trait<$u> for &$t {
             type Output = <$t as $trait<$u>>::Output;
 
             fn $fn(self, rhs: $u) -> Self::Output {
@@ -14,7 +14,7 @@ macro_rules! forward_ref_binop {
             }
         }
 
-        impl $(< $($generi $(: $path1 $(+ $pathn)*)?),* >)? $trait<&$u> for $t {
+        impl $(< $($T $(: $path_1 $(+ $path_n)*)?),* >)? $trait<&$u> for $t {
             type Output = <$t as $trait<$u>>::Output;
 
             fn $fn(self, rhs: &$u) -> Self::Output {
@@ -22,7 +22,7 @@ macro_rules! forward_ref_binop {
             }
         }
 
-        impl $(< $($generi $(: $path1 $(+ $pathn)*)?),* >)? $trait<&$u> for &$t {
+        impl $(< $($T $(: $path_1 $(+ $path_n)*)?),* >)? $trait<&$u> for &$t {
             type Output = <$t as $trait<$u>>::Output;
 
             fn $fn(self, rhs: &$u) -> Self::Output {

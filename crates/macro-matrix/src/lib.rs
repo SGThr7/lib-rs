@@ -1,4 +1,4 @@
-/// Creates a multi dimention [`Vec`].
+/// Creates a multi dimension [`Vec`].
 ///
 /// # Examples
 ///
@@ -19,8 +19,8 @@ macro_rules! mat {
     ($e:expr; $n:expr $(,)?) => {
         vec![$e; $n]
     };
-    ($e:expr; $nhead:expr, $($ntail:expr),* $(,)?) => {
-        vec![$crate::mat![$e; $($ntail),*]; $nhead]
+    ($e:expr; $head:expr, $($tail:expr),* $(,)?) => {
+        vec![$crate::mat![$e; $($tail),*]; $head]
     };
 }
 

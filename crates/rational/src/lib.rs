@@ -3,12 +3,13 @@ use macro_forward_ref_binop::forward_ref_binop;
 use std::{
     cmp::Ordering,
     fmt,
+    hash::{Hash, Hasher},
     iter::{Product, Sum},
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
 /// The rational number type.
-#[derive(Clone, Copy, Hash)]
+#[derive(Clone, Copy)]
 pub struct Rational {
     minus: bool,
     numerator: usize,
@@ -57,13 +58,13 @@ impl Rational {
     }
 
     /// Creates a rational without checking zero division.
-    /// This results in undefined behaviour if the `denominator` is zero.
+    /// This results in undefined behavior if the `denominator` is zero.
     ///
     /// # Safety
     ///
     /// The `denominator` must not be zero.
     pub unsafe fn new_unchecked(minus: bool, numerator: usize, denominator: usize) -> Self {
-        Self::new_raw(minus, numerator, denominator).simplify()
+        Self::new_raw(minus, numerator, denominator).normalize()
     }
 
     /// Makes a new rational number.
@@ -100,7 +101,7 @@ impl Rational {
 
     /// Reduce a fraction.
     /// This function does *not* check zero denominator.
-    fn simplify(self) -> Self {
+    fn normalize(self) -> Self {
         let gcd = self.numerator.gcd(self.denominator);
         Self {
             minus: self.minus,
@@ -285,6 +286,7 @@ impl_assignop! { MulAssign, mul_assign, Mul, mul for Rational }
 impl Div for Rational {
     type Output = Self;
 
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn div(self, rhs: Self) -> Self::Output {
         self * rhs.recip()
     }
@@ -323,6 +325,15 @@ impl Ord for Rational {
                 }
             }
         }
+    }
+}
+
+impl Hash for Rational {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let new_self = self.normalize();
+        new_self.minus.hash(state);
+        new_self.numerator.hash(state);
+        new_self.denominator.hash(state);
     }
 }
 

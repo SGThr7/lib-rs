@@ -114,6 +114,10 @@ impl<M: Modulus> ModInt<M> {
     }
 
     /// Creates a new [`ModInt`] without calculate remainder.
+    ///
+    /// # Safety
+    ///
+    /// Calling this function with a value that is lager than `M::MOD` is undefined behavior.
     pub unsafe fn new_raw(x: Set) -> Self {
         Self(x, PhantomData)
     }
@@ -289,6 +293,7 @@ impl<M: Modulus> Mul for ModInt<M> {
 impl<M: Modulus> Div for ModInt<M> {
     type Output = Self;
 
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn div(self, rhs: Self) -> Self::Output {
         self * rhs.recip()
     }

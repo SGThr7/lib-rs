@@ -56,7 +56,7 @@ pub trait Lcm<Rhs = Self> {
     fn lcm(self, rhs: Rhs) -> Self::Output;
 }
 
-/// The convinient trait to get [`Gcd`] and [`Lcm`] together.
+/// The convenient trait to get [`Gcd`] and [`Lcm`] together.
 pub trait GcdLcm<Rhs = Self> {
     /// The resulting gcd and lcm.
     type Output;

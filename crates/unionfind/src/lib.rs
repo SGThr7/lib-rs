@@ -20,6 +20,11 @@ impl UnionFind {
         self.parent.len()
     }
 
+    /// Returns `true` if the sets has a length of 0.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Returns `true` if `a` and `b` are in the same set.
     ///
     /// # Examples
