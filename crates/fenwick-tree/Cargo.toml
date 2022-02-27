@@ -10,3 +10,4 @@ name = "fenwick_tree"
 
 [dependencies]
 sgthr7-lib-monoid = { path = "../monoid" }
+sgthr7-lib-bisect = { path = "../bisect" }
