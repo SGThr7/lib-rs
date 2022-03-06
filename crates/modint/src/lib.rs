@@ -212,30 +212,9 @@ impl<M: Modulus> Default for ModInt<M> {
     }
 }
 
-/// The inner trait using [`rem_euclid`].
-///
-/// [`rem_euclid`]: usize::rem_euclid
-pub trait RemEuclid {
-    fn rem_euclid(self, rhs: Set) -> Set;
-}
-
-macro_rules! impl_rem_euclid {
-    ($($t:ty)* as $u:ty) => {$(
-        impl RemEuclid for $t {
-            fn rem_euclid(self, rhs: Set) -> Set {
-                (self as $u).rem_euclid(rhs as _) as _
-            }
-        }
-    )*};
-}
-
-impl_rem_euclid! { u8 u16 u32 u64 u128 usize as u128 }
-impl_rem_euclid! { i8 i16 i32 i64 i128 isize as i128 }
-
-impl<M: Modulus, T: RemEuclid> From<T> for ModInt<M> {
-    fn from(x: T) -> Self {
-        // SAFETY: pass remainder
-        unsafe { Self::new_raw(x.rem_euclid(M::MOD)) }
+impl<M: Modulus> From<Set> for ModInt<M> {
+    fn from(x: Set) -> Self {
+        Self::new(x)
     }
 }
 
@@ -412,8 +391,8 @@ macro_rules! impl_cmp_prim {
     )*};
 }
 
-impl_cmp_prim! { PartialEq, eq -> bool; for Set u8 u16 u32 u64 u128 i8 i16 i32 i64 i128 isize }
-impl_cmp_prim! { PartialOrd, partial_cmp -> Option<Ordering>; for Set u8 u16 u32 u64 u128 i8 i16 i32 i64 i128 isize }
+impl_cmp_prim! { PartialEq, eq -> bool; for Set }
+impl_cmp_prim! { PartialOrd, partial_cmp -> Option<Ordering>; for Set }
 
 macro_rules! impl_iter_sum_product {
     ($trait:ident, $fn:ident, $id:expr, $op:ident) => {
