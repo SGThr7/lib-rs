@@ -9,4 +9,8 @@ license = "MIT"
 name = "monoid"
 
 [dependencies]
-sgthr7-lib-num-traits = { path = "../num-traits" }
+sgthr7-lib-num-traits-zero = { path = "../num-traits-zero" }
+sgthr7-lib-num-traits-one = { path = "../num-traits-one" }
+sgthr7-lib-num-traits-recip = { path = "../num-traits-recip" }
+sgthr7-lib-num-traits-bounded = { path = "../num-traits-bounded" }
+sgthr7-lib-num-traits-all-bit-one = { path = "../num-traits-all-bit-one" }

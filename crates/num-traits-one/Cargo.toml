@@ -1,0 +1,12 @@
+[package]
+name = "sgthr7-lib-num-traits-one"
+version = "0.1.0"
+edition = "2018"
+authors = ["SGThr7 <sgthr7@gmail.com>"]
+license = "MIT"
+
+[lib]
+name = "num_traits_one"
+
+[dependencies]
+sgthr7-lib-num-traits-macro-impl-id = { path = "../num-traits-macro-impl-id" }

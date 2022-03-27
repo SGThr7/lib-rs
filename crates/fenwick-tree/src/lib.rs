@@ -57,9 +57,9 @@ impl<T: Monoid> FenwickTree<T> {
     ///
     /// ```
     /// use fenwick_tree::FenwickTree;
-    /// use monoid::types::AddMonoid;
+    /// use monoid::types::AddAlge;
     ///
-    /// let mut bit: FenwickTree<AddMonoid<_>> = vec![1, 2, 3, 4].into();
+    /// let mut bit: FenwickTree<AddAlge<_>> = vec![1, 2, 3, 4].into();
     /// assert_eq!(bit.fold(..), 10);
     /// bit.operate(2, 5);
     /// assert_eq!(bit.fold(..2), 3);
@@ -87,9 +87,9 @@ impl<T: Monoid> FenwickTree<T> {
     ///
     /// ```
     /// use fenwick_tree::FenwickTree;
-    /// use monoid::types::AddMonoid;
+    /// use monoid::types::AddAlge;
     ///
-    /// let bit: FenwickTree<AddMonoid<_>> = vec![1, 2, 3, 4].into();
+    /// let bit: FenwickTree<AddAlge<_>> = vec![1, 2, 3, 4].into();
     /// assert_eq!(bit.fold(..2), 3);
     /// assert_eq!(bit.fold(..=2), 6);
     /// assert_eq!(bit.fold(..), 10);
@@ -215,11 +215,11 @@ impl<T: Monoid> Bisect for FenwickTree<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use monoid::types::AddMonoid;
+    use monoid::types::AddAlge;
 
     #[test]
     fn find_range_by() {
-        let bit: FenwickTree<AddMonoid<_>> = vec![1, 2, 3, 4, 5, 6, 6, 8, 9, 10].into();
+        let bit: FenwickTree<AddAlge<usize>> = vec![1, 2, 3, 4, 5, 6, 6, 8, 9, 10].into();
 
         assert_eq!(bit.find_range_by(|x| x.cmp(&1)), 0..1);
         assert_eq!(bit.find_range_by(|x| x.cmp(&2)), 1..1);
@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn partition_point() {
-        let bit: FenwickTree<AddMonoid<_>> = vec![1, 2, 3, 4, 5, 6, 6, 8, 9, 10].into();
+        let bit: FenwickTree<AddAlge<usize>> = vec![1, 2, 3, 4, 5, 6, 6, 8, 9, 10].into();
 
         assert_eq!(bit.partition_point(|&x| x <= 20), 5);
         assert_eq!(bit.partition_point(|&x| x <= 21), 6);
