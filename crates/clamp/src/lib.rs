@@ -15,9 +15,9 @@ pub trait Clamp {
     /// ```
     /// use clamp::Clamp;
     ///
-    /// assert_eq!((-3).clamp(-2, 1), -2);
-    /// assert_eq!(0.clamp(-2, 1), 0);
-    /// assert_eq!(2.clamp(-2, 1), 1);
+    /// assert_eq!((-3).clamp1(-2, 1), -2);
+    /// assert_eq!(0.clamp1(-2, 1), 0);
+    /// assert_eq!(2.clamp1(-2, 1), 1);
     /// ```
     fn clamp1(self, min: Self, max: Self) -> Self;
 }

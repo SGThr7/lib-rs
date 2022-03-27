@@ -16,7 +16,7 @@
 ///     .map(|(x, y)| mat[x][y])
 ///     .collect::<HashSet<_>>();
 ///
-/// assert_eq!(set, HashSet::from([0, 1, 2, 3, 5, 6, 7, 8]));
+/// assert_eq!(set, vec![0, 1, 2, 3, 5, 6, 7, 8].into_iter().collect::<HashSet<_>>());
 /// ```
 #[macro_export]
 macro_rules! neighbor8 {
