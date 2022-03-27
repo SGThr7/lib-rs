@@ -55,7 +55,7 @@ pub trait PartialGroup: Monoid {
 /// ~~~text
 /// ∀ a ∈ Set, ∃ a⁻¹ ∈ Set, a ◦ a⁻¹ = a⁻¹ ◦ a = e
 /// ~~~
-pub trait MathGroup: Monoid {
+pub trait MathGroup: PartialGroup {
     /// The inverse element of `self`.
     fn inverse(x: Self::Set) -> Self::Set;
 }
