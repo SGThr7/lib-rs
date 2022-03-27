@@ -1,11 +1,11 @@
 use std::{
     cmp::Ordering,
     mem::replace,
-    ops::{Range, RangeFull, RangeTo, RangeToInclusive},
+    ops::{Bound, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
 };
 
 use bisect::Bisect;
-use monoid::Monoid;
+use monoid::{Monoid, PartialGroup};
 
 /// A struct that can update elements and calculate prefix sums fast.
 ///
@@ -94,6 +94,21 @@ impl<T: Monoid> FenwickTree<T> {
     /// assert_eq!(bit.fold(..=2), 6);
     /// assert_eq!(bit.fold(..), 10);
     /// ```
+    ///
+    /// If type `T` of [`FenwickTree`] is implemented [`PartialGroup`],
+    /// range literal including "from" is able to use.
+    ///
+    /// ```
+    /// # use fenwick_tree::FenwickTree;
+    /// # use monoid::types::AddAlge;
+    /// # let bit: FenwickTree<AddAlge<_>> = vec![1, 2, 3, 4].into();
+    /// use std::ops::Bound;
+    ///
+    /// assert_eq!(bit.fold(1..3), 5);
+    /// assert_eq!(bit.fold(1..=3), 9);
+    /// assert_eq!(bit.fold(1..), 9);
+    /// assert_eq!(bit.fold((Bound::Excluded(1), Bound::Excluded(3))), 3);
+    /// ```
     pub fn fold<I: Index<T>>(&self, index: I) -> T::Set {
         index.fold(self)
     }
@@ -149,6 +164,40 @@ impl<T: Monoid> Index<T> for RangeToInclusive<usize> {
 impl<T: Monoid> Index<T> for RangeFull {
     fn fold(self, tree: &FenwickTree<T>) -> <T>::Set {
         (..tree.len()).fold(tree)
+    }
+}
+
+impl<T: PartialGroup> Index<T> for Range<usize> {
+    fn fold(self, tree: &FenwickTree<T>) -> T::Set {
+        T::inverse_operate((..self.end).fold(tree), (..self.start).fold(tree))
+    }
+}
+
+impl<T: PartialGroup> Index<T> for RangeInclusive<usize> {
+    fn fold(self, tree: &FenwickTree<T>) -> T::Set {
+        T::inverse_operate((..=*self.end()).fold(tree), (..*self.start()).fold(tree))
+    }
+}
+
+impl<T: PartialGroup> Index<T> for RangeFrom<usize> {
+    fn fold(self, tree: &FenwickTree<T>) -> T::Set {
+        T::inverse_operate((..).fold(tree), (..self.start).fold(tree))
+    }
+}
+
+impl<T: PartialGroup> Index<T> for (Bound<usize>, Bound<usize>) {
+    fn fold(self, tree: &FenwickTree<T>) -> T::Set {
+        let start = match self.0 {
+            Bound::Included(i) => i,
+            Bound::Excluded(i) => i + 1,
+            Bound::Unbounded => 0,
+        };
+        let end = match self.1 {
+            Bound::Included(i) => i + 1,
+            Bound::Excluded(i) => i,
+            Bound::Unbounded => tree.len(),
+        };
+        T::inverse_operate((..end).fold(tree), (..start).fold(tree))
     }
 }
 
