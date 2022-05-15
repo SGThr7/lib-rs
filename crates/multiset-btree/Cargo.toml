@@ -1,0 +1,11 @@
+[package]
+name = "sgthr7-lib-multiset-btree"
+version = "0.1.0"
+edition = "2018"
+authors = ["SGThr7 <sgthr7@gmail.com>"]
+license = "MIT"
+
+[lib]
+name = "multiset_btree"
+
+[dependencies]
