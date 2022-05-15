@@ -19,6 +19,7 @@ use monoid::{Monoid, PartialGroup};
 ///
 /// [`operate`]: FenwickTree::operate
 /// [`fold`]: FenwickTree::fold
+#[derive(Clone)]
 pub struct FenwickTree<T: Monoid> {
     tree: Vec<T::Set>,
 }
