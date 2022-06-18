@@ -1,14 +1,17 @@
-use gcd_lcm::{Gcd, Lcm};
-use macro_forward_ref_binop::forward_ref_binop;
 use std::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
     iter::{Product, Sum},
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+    u128, u16, u32, u64, u8, usize,
 };
 
-/// The rational number type.
+use gcd_lcm::{Gcd, Lcm};
+use macro_forward_ref_binop::forward_ref_binop;
+
+pub type RationalBase = usize;
+
 #[derive(Clone, Copy)]
 pub struct Rational {
     minus: bool,
@@ -17,14 +20,18 @@ pub struct Rational {
 }
 
 impl Rational {
-    /// Returns zero with rational.
+    /// Returns zero rational.
     ///
     /// # Examples
     ///
     /// ```
     /// use rational::Rational;
     ///
-    /// assert_eq!(Rational::ZERO, 0);
+    /// assert_eq!(Rational::ZERO, 0.into());
+    ///
+    /// let a: Rational = 7.into();
+    /// assert_eq!(a + Rational::ZERO, a);
+    /// assert_eq!(a * Rational::ZERO, Rational::ZERO);
     /// ```
     pub const ZERO: Self = Self {
         minus: false,
@@ -32,14 +39,17 @@ impl Rational {
         denominator: 1,
     };
 
-    /// Returns one with rational.
+    /// Returns one rational.
     ///
     /// # Examples
     ///
     /// ```
     /// use rational::Rational;
     ///
-    /// assert_eq!(Rational::ONE, 1);
+    /// assert_eq!(Rational::ONE, 1.into());
+    ///
+    /// let a: Rational = 7.into();
+    /// assert_eq!(a * Rational::ONE, a);
     /// ```
     pub const ONE: Self = Self {
         minus: false,
@@ -47,56 +57,69 @@ impl Rational {
         denominator: 1,
     };
 
-    /// Creates a rational without simplify and checking zero division.
-    /// This is inner function to calculate operations.
-    unsafe fn new_raw(minus: bool, numerator: usize, denominator: usize) -> Self {
-        Self {
-            minus,
-            numerator,
-            denominator,
-        }
-    }
-
-    /// Creates a rational without checking zero division.
-    /// This results in undefined behavior if the `denominator` is zero.
-    ///
-    /// # Safety
-    ///
-    /// The `denominator` must not be zero.
-    pub unsafe fn new_unchecked(minus: bool, numerator: usize, denominator: usize) -> Self {
-        Self::new_raw(minus, numerator, denominator).normalize()
-    }
-
-    /// Makes a new rational number.
-    ///
-    /// The return number is simplify fraction.
+    /// Returns the maximum rational.
     ///
     /// # Examples
     ///
     /// ```
     /// use rational::Rational;
     ///
-    /// // It means `-1/19`.
-    /// let num = Rational::new(true, 3, 57);
-    /// let num2 = Rational::new(true, 1, 19);
-    /// assert_eq!(num, num2);
-    ///
-    /// let num = num.unwrap();
-    /// assert_eq!(num, -3.0/57.0);
-    /// assert_eq!(num, -1.0/19.0);
-    /// // Rational can compare with int tuple.
-    /// assert_eq!(num, (3, -57));
-    /// assert_eq!(num, (-1, 19));
-    ///
-    /// // The denominator cannot be zero.
-    /// assert_eq!(Rational::new(false, 1, 0), None);
+    /// let a: Rational = (3, 57).into();
+    /// assert!(Rational::MAX >= a);
     /// ```
-    pub fn new(minus: bool, numerator: usize, denominator: usize) -> Option<Self> {
-        if denominator != 0 {
-            Some(unsafe { Self::new_unchecked(minus, numerator, denominator) })
+    pub const MAX: Self = Self {
+        minus: false,
+        numerator: RationalBase::MAX,
+        denominator: 1,
+    };
+
+    /// Returns the minimum rational.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rational::Rational;
+    ///
+    /// let a: Rational = (3, 57).into();
+    /// assert!(Rational::MIN <= a);
+    /// ```
+    pub const MIN: Self = Self {
+        minus: true,
+        numerator: RationalBase::MAX,
+        denominator: 1,
+    };
+
+    /// Makes a new rational number without checking zero denominator.
+    fn new_unchecked(minus: bool, numerator: usize, denominator: usize) -> Self {
+        if numerator == 0 {
+            Self::ZERO
         } else {
-            None
+            Self {
+                minus,
+                numerator,
+                denominator,
+            }
+            .normalize()
         }
+    }
+
+    /// Makes a new rational number.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rational::Rational;
+    ///
+    /// // 3 // 57 == 1 // 19
+    /// let a: Rational = (3, 57).into();
+    /// // 1 // 19
+    /// let b: Rational = (1, 19).into();
+    /// assert_eq!(a, b);
+    /// ```
+    pub fn new(minus: bool, numerator: usize, denominator: usize) -> Self {
+        assert_ne!(denominator, 0, "denominator must be non-zero");
+
+        Self::new_unchecked(minus, numerator, denominator)
     }
 
     /// Reduce a fraction.
@@ -110,21 +133,53 @@ impl Rational {
         }
     }
 
-    /// Returns `true` if the rational is negative.
+    /// Takes the reciprocal (inverse) of a number.
     ///
     /// # Examples
     ///
     /// ```
     /// use rational::Rational;
     ///
-    /// let a: Rational = (-1, 3).into();
-    /// assert!(a.is_negative());
-    ///
-    /// let a = -a;
-    /// assert!(!a.is_negative());
+    /// let a: Rational = (3, 57).into();
+    /// assert_eq!(a.recip(), (57, 3).into());
+    /// assert_eq!(a.recip(), Rational::ONE / a);
+    /// assert_eq!(a * a.recip(), Rational::ONE);
     /// ```
-    pub const fn is_negative(&self) -> bool {
-        self.minus
+    ///
+    /// ```should_panic
+    /// # use rational::Rational;
+    /// let a = Rational::ZERO;
+    /// // panic: division by zero
+    /// let recip = a.recip();
+    /// ```
+    pub fn recip(self) -> Self {
+        assert_ne!(self.numerator, 0, "cannot get reciprocal of zero");
+
+        Self::new_unchecked(self.minus, self.denominator, self.numerator)
+    }
+
+    /// Raises `self` to the power of `exp`.
+    ///
+    /// Using exponentiation by squaring.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rational::Rational;
+    ///
+    /// let a: Rational = (3, 57).into();
+    ///
+    /// assert_eq!(a.pow(0), Rational::ONE);
+    /// assert_eq!(a.pow(1), a);
+    /// assert_eq!(a.pow(2), a * a);
+    /// ```
+    pub fn pow(self, exp: u32) -> Self {
+        let is_odd_exp = (exp & 1) == 1;
+        Self::new_unchecked(
+            self.minus && is_odd_exp,
+            self.numerator.pow(exp),
+            self.denominator.pow(exp),
+        )
     }
 
     /// Computes the absolute value of `self`.
@@ -134,60 +189,47 @@ impl Rational {
     /// ```
     /// use rational::Rational;
     ///
-    /// let num: Rational = (-1, 3).into();
+    /// let a: Rational = (3, 57).into();
+    /// let b: Rational = (-3, 57).into();
     ///
-    /// assert_eq!(num.abs(), -num);
+    /// assert_eq!(a.abs(), a);
+    /// assert_eq!(b.abs(), a);
     /// ```
-    pub const fn abs(self) -> Self {
-        Self {
-            minus: false,
-            numerator: self.numerator,
-            denominator: self.denominator,
-        }
+    pub fn abs(mut self) -> Self {
+        self.minus = false;
+        self
     }
 
-    /// Takes the reciprocal (inverse) of a number.
+    /// Returns `true` if `self` is positive.
     ///
     /// # Examples
     ///
     /// ```
     /// use rational::Rational;
     ///
-    /// let num: Rational = (-2, 3).into();
+    /// let a: Rational = (3, 57).into();
     ///
-    /// assert_eq!(num.recip(), -3.0 / 2.0);
+    /// assert!(    a.is_positive());
+    /// assert!(!(-a).is_positive());
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// This function will panic if `self == 0`.
-    pub fn recip(self) -> Self {
-        if self.numerator == 0 {
-            panic!("Cannot compute reciprocal of {:?}", self)
-        }
-        unsafe { Self::new_unchecked(self.minus, self.denominator, self.numerator) }
+    pub fn is_positive(&self) -> bool {
+        !self.minus
     }
 
-    /// Raises self to the power of exp, using exponentiation by squaring.
+    /// Returns `true` if `self` is negative.
     ///
     /// # Examples
     ///
     /// ```
     /// use rational::Rational;
     ///
-    /// let num: Rational = (-2, 3).into();
+    /// let a: Rational = (3, 57).into();
     ///
-    /// assert_eq!(num.pow(2), (4, 9));
-    /// assert_eq!(num.pow(3), (-8, 27));
+    /// assert!(!   a.is_negative());
+    /// assert!( (-a).is_negative());
     /// ```
-    pub fn pow(self, exp: u32) -> Self {
-        unsafe {
-            Self::new_unchecked(
-                self.minus && (exp % 2 == 1),
-                self.numerator.pow(exp),
-                self.denominator.pow(exp),
-            )
-        }
+    pub fn is_negative(&self) -> bool {
+        self.minus
     }
 }
 
@@ -199,26 +241,28 @@ impl Default for Rational {
 
 impl fmt::Display for Rational {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let minus = if self.minus { "-" } else { "" };
-        write!(f, "{}{} // {}", minus, self.numerator, self.denominator)
+        if self.minus {
+            write!(f, "-")?;
+        }
+        write!(f, "{} // {}", self.numerator, self.denominator)
     }
 }
 
 impl fmt::Debug for Rational {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self, f)
+        fmt::Display::fmt(self, f)
     }
 }
 
 macro_rules! impl_assignop {
-    ($assign_trait:ident, $assign_fn:ident, $op_trait:ident, $op_fn:ident for $t:ty) => {
-        impl $assign_trait<$t> for Rational {
-            fn $assign_fn(&mut self, other: $t) {
+    ($assign_trait:ident, $assign_fn:ident, $op_trait:ident, $op_fn:ident for $t:tt $u:tt) => {
+        impl $assign_trait<$u> for $t {
+            fn $assign_fn(&mut self, other: $u) {
                 *self = $op_trait::$op_fn(*self, other)
             }
         }
-        impl $assign_trait<&$t> for Rational {
-            fn $assign_fn(&mut self, other: &$t) {
+        impl $assign_trait<&$u> for $t {
+            fn $assign_fn(&mut self, other: &$u) {
                 *self = $op_trait::$op_fn(*self, other)
             }
         }
@@ -230,33 +274,44 @@ impl Add for Rational {
 
     fn add(self, rhs: Self) -> Self::Output {
         let denominator = self.denominator.lcm(rhs.denominator);
+        let lhs_numerator = self.numerator * (denominator / self.denominator);
+        let rhs_numerator = rhs.numerator * (denominator / rhs.denominator);
         match (self.minus, rhs.minus) {
             (true, true) | (false, false) => {
-                let numerator = self.numerator * (denominator / self.denominator)
-                    + rhs.numerator * (denominator / rhs.denominator);
-                unsafe { Self::new_unchecked(self.minus, numerator, denominator) }
+                let numerator = lhs_numerator + rhs_numerator;
+                Self::new(self.minus, numerator, denominator)
             }
             (true, false) | (false, true) => {
-                let ln = self.numerator * (denominator / self.denominator);
-                let rn = rhs.numerator * (denominator / rhs.denominator);
-                let (minus, numerator) = if ln >= rn {
-                    (self.minus, ln - rn)
+                let (minus, numerator) = if lhs_numerator >= rhs_numerator {
+                    (self.minus, lhs_numerator - rhs_numerator)
                 } else {
-                    (rhs.minus, rn - ln)
+                    (rhs.minus, rhs_numerator - lhs_numerator)
                 };
-                unsafe { Self::new_unchecked(minus, numerator, denominator) }
+                Self::new(minus, numerator, denominator)
             }
         }
     }
 }
 forward_ref_binop! { impl Add, add for Rational, Rational }
-impl_assignop! { AddAssign, add_assign, Add, add for Rational }
+impl_assignop! { AddAssign, add_assign, Add, add for Rational Rational }
 
 impl Neg for Rational {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        unsafe { Self::new_raw(!self.minus, self.numerator, self.denominator) }
+        Self {
+            minus: !self.minus,
+            numerator: self.numerator,
+            denominator: self.denominator,
+        }
+    }
+}
+
+impl Neg for &'_ Rational {
+    type Output = <Rational as Neg>::Output;
+
+    fn neg(self) -> Self::Output {
+        Rational::neg(*self)
     }
 }
 
@@ -268,7 +323,7 @@ impl Sub for Rational {
     }
 }
 forward_ref_binop! { impl Sub, sub for Rational, Rational }
-impl_assignop! { SubAssign, sub_assign, Sub, sub for Rational }
+impl_assignop! { SubAssign, sub_assign, Sub, sub for Rational Rational }
 
 impl Mul for Rational {
     type Output = Self;
@@ -277,11 +332,11 @@ impl Mul for Rational {
         let minus = self.minus ^ rhs.minus;
         let numerator = self.numerator * rhs.numerator;
         let denominator = self.denominator * rhs.denominator;
-        unsafe { Self::new_unchecked(minus, numerator, denominator) }
+        Self::new_unchecked(minus, numerator, denominator)
     }
 }
 forward_ref_binop! { impl Mul, mul for Rational, Rational }
-impl_assignop! { MulAssign, mul_assign, Mul, mul for Rational }
+impl_assignop! { MulAssign, mul_assign, Mul, mul for Rational Rational }
 
 impl Div for Rational {
     type Output = Self;
@@ -292,7 +347,82 @@ impl Div for Rational {
     }
 }
 forward_ref_binop! { impl Div, div for Rational, Rational }
-impl_assignop! { DivAssign, div_assign, Div, div for Rational }
+impl_assignop! { DivAssign, div_assign, Div, div for Rational Rational }
+
+impl Ord for Rational {
+    /// Returns an [`Ordering`] between `self` and `other`.
+    ///
+    /// # Complexity
+    ///
+    /// | Time  |
+    /// | ----- |
+    /// | ln(n) |
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rational::Rational;
+    ///
+    /// let five: Rational = 5.into();
+    /// let ten: Rational = 10.into();
+    ///
+    /// assert_eq!(five.cmp(&ten), Ordering::Less);
+    /// assert_eq!(ten.cmp(&five), Ordering::Greater);
+    /// assert_eq!(five.cmp(&five), Ordering::Equal);
+    /// ```
+    fn cmp(&self, other: &Self) -> Ordering {
+        use Ordering::*;
+        match (self.minus, other.minus) {
+            (true, false) => Less,
+            (false, true) => Greater,
+            // (true, true) | (false, false)
+            (minus, _) => {
+                let mut lhs = (self.numerator, self.denominator);
+                let mut rhs = (other.numerator, other.denominator);
+
+                if lhs == rhs || (lhs.0 == 0 && rhs.0 == 0) {
+                    return Equal;
+                }
+
+                let mut rev = minus;
+
+                while lhs.1 != 0 && rhs.1 != 0 {
+                    let lhs_quot = lhs.0 / lhs.1;
+                    let rhs_quot = rhs.0 / rhs.1;
+
+                    match lhs_quot.cmp(&rhs_quot) {
+                        Equal => (),
+                        cmp => return if rev { cmp.reverse() } else { cmp },
+                    }
+
+                    rev = !rev;
+                    lhs = (lhs.1, lhs.0.rem_euclid(lhs.1));
+                    rhs = (rhs.1, rhs.0.rem_euclid(rhs.1));
+                }
+
+                let ret = match (lhs.1 == 0, rhs.1 == 0) {
+                    // Equal
+                    (true, true) => unreachable!(),
+                    (false, false) => unreachable!(),
+                    (true, false) => Greater,
+                    (false, true) => Less,
+                };
+
+                if rev {
+                    ret.reverse()
+                } else {
+                    ret
+                }
+            }
+        }
+    }
+}
+
+impl PartialOrd for Rational {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 impl PartialEq for Rational {
     fn eq(&self, other: &Self) -> bool {
@@ -302,260 +432,247 @@ impl PartialEq for Rational {
 
 impl Eq for Rational {}
 
-impl PartialOrd for Rational {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Rational {
-    fn cmp(&self, other: &Self) -> Ordering {
-        use Ordering::{Equal, Greater, Less};
-        match (self.minus, other.minus) {
-            (true, false) => Less,
-            (false, true) => Greater,
-            (true, true) | (false, false) => {
-                let t = self - other;
-                if t.numerator == 0 {
-                    Equal
-                } else if t.minus {
-                    Less
-                } else {
-                    Greater
-                }
-            }
-        }
-    }
-}
-
 impl Hash for Rational {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        let new_self = self.normalize();
-        new_self.minus.hash(state);
-        new_self.numerator.hash(state);
-        new_self.denominator.hash(state);
+        self.minus.hash(state);
+        self.numerator.hash(state);
+        self.denominator.hash(state);
     }
+}
+
+// impl From<RationalBase> for Rational {
+//     fn from(v: RationalBase) -> Self {
+//         unsafe { Rational::new_raw(false, v, 1) }
+//     }
+// }
+
+macro_rules! impl_from_int {
+    ($($t:ty)*) => {$(
+        impl From<$t> for Rational {
+            fn from(v: $t) -> Self {
+                (v, 1).into()
+            }
+        }
+
+        impl From<($t, $t)> for Rational {
+            fn from(v: ($t, $t)) -> Self {
+                let (numerator, denominator) = v;
+                let minus = numerator.is_negative() ^ denominator.is_negative();
+                Self::new(minus, numerator.abs() as RationalBase, denominator.abs() as RationalBase)
+            }
+        }
+    )*};
 }
 
 macro_rules! impl_from_uint {
     ($($t:ty)*) => {$(
         impl From<$t> for Rational {
-            fn from(x: $t) -> Self {
-                (x, 1).into()
+            fn from(v: $t) -> Self {
+                (v, 1).into()
             }
         }
+
         impl From<($t, $t)> for Rational {
-            fn from(x: ($t, $t)) -> Self {
-                unsafe { Self::new_unchecked(false, x.0 as usize, x.1 as usize) }
+            fn from(v: ($t, $t)) -> Self {
+                Self::new(false, v.0 as RationalBase, v.1 as RationalBase)
             }
         }
     )*};
 }
 
-macro_rules! impl_from_int {
-    ($($t:ty)*) => {$(
-        impl From<$t> for Rational {
-            fn from(x: $t) -> Self {
-                (x, 1).into()
-            }
-        }
-        impl From<($t, $t)> for Rational {
-            fn from(x: ($t, $t)) -> Self {
-                unsafe {
-                    Self::new_unchecked(
-                        x.0.is_negative() ^ x.1.is_negative(),
-                        x.0.abs() as usize,
-                        x.1.abs() as usize
-                    )
+macro_rules! impl_into_float {
+    ($($u:tt)*) => {$(
+        impl From<Rational> for $u {
+            fn from(v: Rational) -> Self {
+                let f = v.numerator as $u / v.denominator as $u;
+                if v.minus {
+                    -f
+                } else {
+                    f
                 }
             }
         }
     )*};
 }
 
-impl_from_uint! { u8 u16 u32 usize }
-impl_from_int! { i8 i16 i32 i64 isize }
-// FIXME: Consider to overflowing
-impl_from_uint! { u64 }
-impl_from_int! { i128 }
+// Like `as` expression
+impl_from_int! { i8 i16 i32 i64 i128 isize }
+impl_from_uint! { u8 u16 u32 u64 u128 usize }
 
-macro_rules! impl_from_float {
-    ($($t:tt)*) => {$(
-        impl From<Rational> for $t {
-            fn from(x: Rational) -> Self {
-                let num = x.numerator as $t;
-                let deno = x.denominator as $t;
-                let f = num / deno;
-                if x.minus { -f } else { f }
-            }
-        }
-    )*};
-}
+impl_into_float! { f32 f64 }
 
-impl_from_float! { f32 f64 }
+// pub struct TryFromFloatError {
+//     kind: TryFromFloatErrorKind,
+// }
 
-macro_rules! impl_binop_prim {
-    ($trait:ident, $fn:ident, $assign_trait:ident, $assign_fn:ident for $($t:ty)*) => {$(
-        impl $trait<$t> for Rational {
-            type Output = <Rational as $trait>::Output;
-            fn $fn(self, rhs: $t) -> Self::Output {
-                $trait::$fn(self, Rational::from(rhs))
-            }
-        }
-        impl $trait<Rational> for $t {
-            type Output = <Rational as $trait>::Output;
-            fn $fn(self, rhs: Rational) -> Self::Output {
-                $trait::$fn(Rational::from(self), rhs)
-            }
-        }
-        forward_ref_binop! { impl $trait, $fn for Rational, $t }
-        forward_ref_binop! { impl $trait, $fn for $t, Rational }
-        impl_assignop! { $assign_trait, $assign_fn, $trait, $fn for $t }
-    )*};
-}
+// pub enum TryFromFloatErrorKind {
+//     Nan,
+//     Infinite,
+// }
 
-impl_binop_prim! { Add, add, AddAssign, add_assign for u8 u16 u32 usize i8 i16 i32 i64 isize }
-impl_binop_prim! { Sub, sub, SubAssign, sub_assign for u8 u16 u32 usize i8 i16 i32 i64 isize }
-impl_binop_prim! { Mul, mul, MulAssign, mul_assign for u8 u16 u32 usize i8 i16 i32 i64 isize }
-impl_binop_prim! { Div, div, DivAssign, div_assign for u8 u16 u32 usize i8 i16 i32 i64 isize }
-// FIXME: Consider to overflowing
-impl_binop_prim! { Add, add, AddAssign, add_assign for u64 i128 }
-impl_binop_prim! { Sub, sub, SubAssign, sub_assign for u64 i128 }
-impl_binop_prim! { Mul, mul, MulAssign, mul_assign for u64 i128 }
-impl_binop_prim! { Div, div, DivAssign, div_assign for u64 i128 }
+// impl TryFrom<f64> for Rational {
+//     type Error = TryFromFloatError;
 
-macro_rules! impl_cmp_int {
-    (@for $t:ty) => {
-        impl PartialEq<$t> for Rational {
-            fn eq(&self, other: &$t) -> bool {
-                PartialEq::eq(self, &Rational::from(*other))
+//     fn try_from(value: f64) -> Result<Self, Self::Error> {
+//         match value.classify() {
+//             FpCategory::Nan => Err(TryFromFloatError {
+//                 kind: TryFromFloatErrorKind::Nan,
+//             }),
+//             FpCategory::Infinite => Err(TryFromFloatError {
+//                 kind: TryFromFloatErrorKind::Infinite,
+//             }),
+//             FpCategory::Zero => Ok(Self::ZERO),
+//             FpCategory::Subnormal => todo!(),
+//             FpCategory::Normal => {
+//                 todo!();
+//                 let minus = value.is_sign_negative();
+//                 let digit = unsafe { value.log10().to_int_unchecked() };
+//                 let order = 10usize.pow(digit);
+//                 let numerator = unsafe { (value * order as f64).to_int_unchecked() };
+//                 Ok(Self::new(minus, numerator, order))
+//             }
+//         }
+//     }
+// }
+
+macro_rules! impl_fold {
+    ($trait:ident, $name:ident, $t:tt, $id:expr, $fn:expr) => {
+        impl $trait for $t {
+            fn $name<I: Iterator<Item = Self>>(iter: I) -> Self {
+                iter.fold($id, $fn)
             }
         }
 
-        impl PartialEq<Rational> for $t {
-            fn eq(&self, other: &Rational) -> bool {
-                PartialEq::eq(&Rational::from(*self), other)
-            }
-        }
-
-        impl PartialOrd<$t> for Rational {
-            fn partial_cmp(&self, other: &$t) -> Option<Ordering> {
-                PartialOrd::partial_cmp(self, &Rational::from(*other))
-            }
-        }
-
-        impl PartialOrd<Rational> for $t {
-            fn partial_cmp(&self, other: &Rational) -> Option<Ordering> {
-                PartialOrd::partial_cmp(&Rational::from(*self), other)
+        impl<'a> $trait<&'a $t> for $t {
+            fn $name<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+                iter.fold($id, $fn)
             }
         }
     };
-    ($($t:ty)*) => {$(
-        impl_cmp_int! { @for $t }
-        impl_cmp_int! { @for ($t, $t) }
-    )*};
 }
 
-impl_cmp_int! { u8 u16 u32 usize i8 i16 i32 i64 isize }
-// FIXME: Consider to overflowing
-impl_cmp_int! { u64 i128 }
-
-macro_rules! impl_cmp_float {
-    ($($t:tt)*) => {$(
-        impl PartialEq<$t> for Rational {
-            fn eq(&self, other: &$t) -> bool {
-                PartialEq::eq(&$t::from(*self), other)
-            }
-        }
-
-        impl PartialEq<Rational> for $t {
-            fn eq(&self, other: &Rational) -> bool {
-                PartialEq::eq(self, &$t::from(*other))
-            }
-        }
-
-        impl PartialOrd<$t> for Rational {
-            fn partial_cmp(&self, other: &$t) -> Option<Ordering> {
-                PartialOrd::partial_cmp(&$t::from(*self), other)
-            }
-        }
-
-        impl PartialOrd<Rational> for $t {
-            fn partial_cmp(&self, other: &Rational) -> Option<Ordering> {
-                PartialOrd::partial_cmp(self, &$t::from(*other))
-            }
-        }
-    )*};
-}
-
-impl_cmp_float! { f32 f64 }
-
-impl Sum for Rational {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self::ZERO, |a, b| a + b)
-    }
-}
-
-impl<'a> Sum<&'a Rational> for Rational {
-    fn sum<I: Iterator<Item = &'a Rational>>(iter: I) -> Self {
-        iter.fold(Self::ZERO, |a, b| a + b)
-    }
-}
-
-impl Product for Rational {
-    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self::ONE, |a, b| a * b)
-    }
-}
-
-impl<'a> Product<&'a Rational> for Rational {
-    fn product<I: Iterator<Item = &'a Rational>>(iter: I) -> Self {
-        iter.fold(Self::ONE, |a, b| a * b)
-    }
-}
+impl_fold! { Sum, sum, Rational, Self::ZERO, Add::add }
+impl_fold! { Product, product, Rational, Self::ONE, Mul::mul }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn cmp_float() {
-        assert_eq!(Rational::from((1, -3)), -1.0 / 3.0);
+    const RANGE: isize = 25;
+    const EPSILON: f64 = 1e-10;
+
+    macro_rules! rat_iter {
+        ($range:expr) => {
+            $range
+                .clone()
+                .flat_map(|a1| $range.filter(|&a2| a2 != 0).map(move |a2| (a1, a2)))
+        };
+    }
+
+    macro_rules! rat_test {
+        ($ra:ident, $fa:ident, $rb:ident, $fb:ident, $test:expr) => {
+            for (a1, a2) in rat_iter!(-RANGE..=RANGE) {
+                let $ra: Rational = (a1, a2).into();
+                let $fa: f64 = a1 as f64 / a2 as f64;
+                for (b1, b2) in rat_iter!(-RANGE..=RANGE) {
+                    let $rb: Rational = (b1, b2).into();
+                    let $fb: f64 = b1 as f64 / b2 as f64;
+
+                    $test
+                }
+            }
+        };
+    }
+
+    macro_rules! rat_test_op {
+        ($fn:path) => {
+            rat_test! { ra, fa, rb, fb, {
+                let r = $fn(ra, rb);
+                let r: f64 = r.into();
+                let f = $fn(fa, fb);
+                let diff = f - r;
+                assert!(diff.abs() <= EPSILON);
+            }}
+        };
     }
 
     #[test]
-    fn cmp_int() {
-        assert_eq!(Rational::from((9, 3)), 3);
-        assert_eq!(Rational::from((-9, 3)), -3);
-        assert_eq!(Rational::from((9, -3)), -3);
-        assert_eq!(Rational::from((-9, -3)), 3);
+    fn from_int() {
+        let _: Rational = 7.into();
+        let a: Rational = (3, 57).into();
+        let b: Rational = (-3, 57).into();
+        let c: Rational = (3, -57).into();
+        let d: Rational = (-3, -57).into();
+        assert_eq!(a, d);
+        assert_eq!(b, c);
     }
 
     #[test]
     fn add() {
         let a: Rational = (7, 6).into();
         let b: Rational = (7, 4).into();
-        assert_eq!(a + b, (35, 12));
+        let res: Rational = (35, 12).into();
+        assert_eq!(a + b, res);
+
+        rat_test_op!(Add::add);
     }
 
     #[test]
     fn sub() {
         let a: Rational = (7, 6).into();
         let b: Rational = (7, 4).into();
-        assert_eq!(a - b, (-7, 12));
+        assert_eq!(a - b, (-7, 12).into());
+
+        rat_test_op!(Sub::sub);
     }
 
     #[test]
     fn mul() {
         let a: Rational = (7, 6).into();
         let b: Rational = (7, 4).into();
-        assert_eq!(a * b, (49, 24));
+        assert_eq!(a * b, (49, 24).into());
+
+        rat_test_op!(Mul::mul);
     }
 
     #[test]
     fn div() {
         let a: Rational = (7, 6).into();
         let b: Rational = (7, 4).into();
-        assert_eq!(a / b, (2, 3));
+        assert_eq!(a / b, (2, 3).into());
+
+        rat_test! { ra, fa, rb, fb, {
+            if rb == Rational::ZERO || fb == 0.0 {
+                continue;
+            }
+            let r = ra / rb;
+            let r: f64 = r.into();
+            let f = fa / fb;
+            let diff = f - r;
+            assert!(diff.abs() <= EPSILON);
+        }}
+    }
+
+    #[test]
+    fn cmp() {
+        use Ordering::*;
+        let a: Rational = (2, 3).into();
+        let b: Rational = (3, 4).into();
+
+        assert_eq!(a.cmp(&b), Less);
+        assert_eq!(b.cmp(&a), Greater);
+        assert_eq!(a.cmp(&a), Equal);
+
+        assert_eq!(a.cmp(&Rational::MAX), Less);
+        assert_eq!(a.cmp(&Rational::MIN), Greater);
+    }
+
+    #[test]
+    fn cmp_in_range() {
+        rat_test! { ra, fa, rb, fb, {
+            let r = ra.cmp(&rb);
+            let f = fa.partial_cmp(&fb).unwrap();
+            assert_eq!(r, f, "a: {}, b: {}", ra, rb);
+        }}
     }
 }
