@@ -389,3 +389,94 @@ macro_rules! range_bisect {
 }
 
 range_bisect! { u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vec_bisect() {
+        let v = [1, 2, 3, 4, 4, 4, 6, 7, 7, 8];
+
+        assert_eq!(v.find_range(&0), 0..0);
+        assert_eq!(v.find_range(&1), 0..1);
+        assert_eq!(v.find_range(&2), 1..2);
+        assert_eq!(v.find_range(&3), 2..3);
+        assert_eq!(v.find_range(&4), 3..6);
+        assert_eq!(v.find_range(&5), 6..6);
+        assert_eq!(v.find_range(&6), 6..7);
+        assert_eq!(v.find_range(&7), 7..9);
+        assert_eq!(v.find_range(&8), 9..10);
+        assert_eq!(v.find_range(&9), 10..10);
+    }
+
+    #[test]
+    /// [C - MAD TEAM](https://atcoder.jp/contests/zone2021/tasks/zone2021_c)
+    fn zone2021_c() {
+        use itertools::Itertools;
+        use std::collections::BTreeSet;
+
+        fn solver(ar: Vec<Vec<usize>>) -> usize {
+            const STATUS_LEN: usize = 5;
+            const LIM: usize = 1e9 as usize;
+
+            let ng = (0..=LIM).partition_point(|x| {
+                let status_set = ar
+                    .iter()
+                    .map(|status| {
+                        status
+                            .iter()
+                            .copied()
+                            .enumerate()
+                            .filter_map(|(i, v)| if v >= x { Some(i) } else { None })
+                            .collect::<BTreeSet<_>>()
+                    })
+                    .collect::<BTreeSet<_>>();
+                if status_set.len() < 3 {
+                    status_set
+                        .into_iter()
+                        .fold(BTreeSet::new(), |acc, set| &acc | &set)
+                        .len()
+                        == STATUS_LEN
+                } else {
+                    status_set
+                        .iter()
+                        .tuple_combinations()
+                        .any(|(a, b, c)| (&(a | b) | c).len() == STATUS_LEN)
+                }
+            });
+            // collect range (closed): 0..ng
+            ng - 1
+        }
+
+        let ar = vec![
+            vec![3, 9, 6, 4, 6],
+            vec![6, 9, 3, 1, 1],
+            vec![8, 8, 9, 3, 7],
+        ];
+        assert_eq!(solver(ar), 4);
+
+        let ar = vec![
+            vec![6, 13, 6, 19, 11],
+            vec![4, 4, 12, 11, 18],
+            vec![20, 7, 19, 2, 5],
+            vec![15, 5, 12, 20, 7],
+            vec![8, 7, 6, 18, 5],
+        ];
+        assert_eq!(solver(ar), 13);
+
+        let ar = vec![
+            vec![6, 7, 5, 18, 2],
+            vec![3, 8, 1, 6, 3],
+            vec![7, 2, 8, 7, 7],
+            vec![6, 3, 3, 4, 7],
+            vec![12, 8, 9, 15, 9],
+            vec![9, 8, 6, 1, 10],
+            vec![12, 9, 7, 8, 2],
+            vec![10, 3, 17, 4, 10],
+            vec![3, 1, 3, 19, 3],
+            vec![3, 14, 7, 13, 1],
+        ];
+        assert_eq!(solver(ar), 10);
+    }
+}

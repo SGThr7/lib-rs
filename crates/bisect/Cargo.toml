@@ -9,3 +9,6 @@ license = "MIT"
 name = "bisect"
 
 [dependencies]
+
+[dev-dependencies]
+itertools = "0.10.3"

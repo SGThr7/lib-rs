@@ -7,10 +7,13 @@ edition = "2018"
 [package.metadata.cargo-compete.bin]
 unionfind_a = { problem = "https://atcoder.jp/contests/atc001/tasks/unionfind_a"}
 typical_algorithm_a = { problem = "https://atcoder.jp/contests/typical-algorithm/tasks/typical_algorithm_a"}
+zone2021_c = { problem = "https://atcoder.jp/contests/zone2021/tasks/zone2021_c"}
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-proconio = "0.3.8"
+proconio = { version = "=0.3.6", features = ["derive"] }
+itertools = "=0.9.0"
+
 sgthr7-lib-unionfind = { path = "../../crates/unionfind" }
 sgthr7-lib-bisect = { path = "../../crates/bisect" }
