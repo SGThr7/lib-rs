@@ -40,7 +40,7 @@ pub struct BTreeMultiSet<T> {
     len: usize,
 }
 
-impl<T> BTreeMultiSet<T> {
+impl<T: Ord> BTreeMultiSet<T> {
     /// Makes a new, empty `BTreeMultiSet`.
     ///
     /// Does not allocate anything on its own.
@@ -726,48 +726,49 @@ impl<T> BTreeMultiSet<T> {
         other.is_subset(self)
     }
 
-    /// Retains only the elements specified by the predicate.
-    ///
-    /// In other words, remove all elements `e` such that `f(&e)` returns `false`.
-    /// The elements are visited in ascending order.
-    ///
-    /// # Complexity
-    ///
-    /// N: `self.len()`
-    ///
-    /// | Time |
-    /// | ---- |
-    /// | O(N) |
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use multiset_btree::BTreeMultiSet;
-    ///
-    /// let mut set = vec![1, 2, 2, 3, 4, 5, 5, 5].into_iter().collect::<BTreeMultiSet<_>>();
-    /// set.retain(|&x| x % 2 == 0);
-    /// assert_eq!(set.len(), 3);
-    /// assert_eq!(
-    ///     set.into_iter().collect::<Vec<_>>(),
-    ///     [2, 2, 4]
-    /// );
-    /// ```
-    pub fn retain<F>(&mut self, mut f: F)
-    where
-        T: Ord,
-        F: FnMut(&T) -> bool,
-    {
-        let mut len = 0;
-        self.tree.retain(|v, count| {
-            if f(v) {
-                len += *count;
-                true
-            } else {
-                false
-            }
-        });
-        self.len = len;
-    }
+    // WARNING: After 1.53.0
+    // /// Retains only the elements specified by the predicate.
+    // ///
+    // /// In other words, remove all elements `e` such that `f(&e)` returns `false`.
+    // /// The elements are visited in ascending order.
+    // ///
+    // /// # Complexity
+    // ///
+    // /// N: `self.len()`
+    // ///
+    // /// | Time |
+    // /// | ---- |
+    // /// | O(N) |
+    // ///
+    // /// # Examples
+    // ///
+    // /// ```
+    // /// use multiset_btree::BTreeMultiSet;
+    // ///
+    // /// let mut set = vec![1, 2, 2, 3, 4, 5, 5, 5].into_iter().collect::<BTreeMultiSet<_>>();
+    // /// set.retain(|&x| x % 2 == 0);
+    // /// assert_eq!(set.len(), 3);
+    // /// assert_eq!(
+    // ///     set.into_iter().collect::<Vec<_>>(),
+    // ///     [2, 2, 4]
+    // /// );
+    // /// ```
+    // pub fn retain<F>(&mut self, mut f: F)
+    // where
+    //     T: Ord,
+    //     F: FnMut(&T) -> bool,
+    // {
+    //     let mut len = 0;
+    //     self.tree.retain(|v, count| {
+    //         if f(v) {
+    //             len += *count;
+    //             true
+    //         } else {
+    //             false
+    //         }
+    //     });
+    //     self.len = len;
+    // }
 }
 
 struct MultiSetElm<T, C>((T, C));
@@ -791,7 +792,7 @@ impl<T: Debug> Debug for BTreeMultiSet<T> {
     }
 }
 
-impl<T> Default for BTreeMultiSet<T> {
+impl<T: Ord> Default for BTreeMultiSet<T> {
     fn default() -> Self {
         Self::new()
     }
@@ -975,7 +976,7 @@ where
 
 impl<'a, T> IntoIterator for &'a BTreeMultiSet<T>
 where
-    T: Clone,
+    T: Clone + Ord,
 {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;

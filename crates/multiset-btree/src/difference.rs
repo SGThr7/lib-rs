@@ -2,7 +2,7 @@ use crate::{merge_iter::MergeIter, BTreeMultiSet, Iter};
 
 pub struct Difference<'a, T: 'a>(MergeIter<Iter<'a, T>>);
 
-impl<T> Difference<'_, T> {
+impl<T: Ord> Difference<'_, T> {
     pub(crate) fn new<'a>(a: &'a BTreeMultiSet<T>, b: &'a BTreeMultiSet<T>) -> Difference<'a, T> {
         Difference(MergeIter::new(a.iter(), b.iter()))
     }

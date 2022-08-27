@@ -11,6 +11,7 @@ use gcd_lcm::{Gcd, Lcm};
 use macro_forward_ref_binop::forward_ref_binop;
 
 pub type RationalBase = usize;
+const RATIONAL_BASE_MAX: RationalBase = usize::MAX;
 
 #[derive(Clone, Copy)]
 pub struct Rational {
@@ -69,7 +70,7 @@ impl Rational {
     /// ```
     pub const MAX: Self = Self {
         minus: false,
-        numerator: RationalBase::MAX,
+        numerator: RATIONAL_BASE_MAX,
         denominator: 1,
     };
 
@@ -85,7 +86,7 @@ impl Rational {
     /// ```
     pub const MIN: Self = Self {
         minus: true,
-        numerator: RationalBase::MAX,
+        numerator: RATIONAL_BASE_MAX,
         denominator: 1,
     };
 
@@ -362,6 +363,7 @@ impl Ord for Rational {
     ///
     /// ```
     /// use rational::Rational;
+    /// use std::cmp::Ordering;
     ///
     /// let five: Rational = 5.into();
     /// let ten: Rational = 10.into();
