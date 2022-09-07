@@ -112,9 +112,9 @@ impl Rational {
     /// use rational::Rational;
     ///
     /// // 3 // 57 == 1 // 19
-    /// let a: Rational = (3, 57).into();
+    /// let a = Rational::new(false, 3, 57);
     /// // 1 // 19
-    /// let b: Rational = (1, 19).into();
+    /// let b = Rational::new(false, 1, 19);
     /// assert_eq!(a, b);
     /// ```
     pub fn new(minus: bool, numerator: usize, denominator: usize) -> Self {
@@ -526,7 +526,6 @@ impl_into_float! { f32 f64 }
 //             FpCategory::Zero => Ok(Self::ZERO),
 //             FpCategory::Subnormal => todo!(),
 //             FpCategory::Normal => {
-//                 todo!();
 //                 let minus = value.is_sign_negative();
 //                 let digit = unsafe { value.log10().to_int_unchecked() };
 //                 let order = 10usize.pow(digit);
@@ -667,6 +666,17 @@ mod tests {
 
         assert_eq!(a.cmp(&Rational::MAX), Less);
         assert_eq!(a.cmp(&Rational::MIN), Greater);
+
+        // minus
+        let a: Rational = (-2, 3).into();
+        let a2: Rational = (2, -3).into();
+        let b: Rational = (-3, 4).into();
+
+        assert_eq!(a.cmp(&a2), Equal);
+        assert_eq!(a.cmp(&a), Equal);
+
+        assert_eq!(a.cmp(&b), Greater);
+        assert_eq!(b.cmp(&a), Less);
     }
 
     #[test]

@@ -18,9 +18,9 @@ pub type Set = usize;
 /// An integer that defines [modular arithmetic](https://en.wikipedia.org/wiki/Modular_arithmetic).
 ///
 /// The number that consider only remainders.
-// Given an integer `n > 1`, called a **modulus**,
-// two integers `a` and `b` are said to be **congruent** modulo `n`
-// if `n` is a divisor of their difference.
+/// Given an integer `n > 1`, called a **modulus**,
+/// two integers `a` and `b` are said to be **congruent** modulo `n`
+/// if `n` is a divisor of their difference.
 ///
 /// # Examples
 ///
@@ -75,10 +75,11 @@ pub struct ModInt<M>(Set, PhantomData<M>);
 /// # Examples
 ///
 /// ```
-/// use modint::define_modint;
+/// use modint::{define_modint, Modulus};
 ///
 /// define_modint!(MI mod M = 7);
 ///
+/// assert_eq!(M::MOD, 7);
 /// assert_eq!(MI::from(13), 6);
 /// ```
 #[macro_export]
