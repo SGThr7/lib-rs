@@ -10,10 +10,10 @@ pub mod types;
 /// ∀ a, b, c ∈ Set, (a ∘ b) ∘ c = a ∘ (b ∘ c)
 /// ~~~
 pub trait Semigroup {
-    type Set: Clone;
+    type Set;
 
     /// A binary operator that satisfy [associativity](https://en.wikipedia.org/wiki/Associative_property).
-    fn operate(lhs: Self::Set, rhs: Self::Set) -> Self::Set;
+    fn operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set;
 }
 
 /// [Monoid](https://en.wikipedia.org/wiki/Monoid) is an semigroup with identity element.
@@ -41,7 +41,7 @@ pub trait Monoid: Semigroup {
 /// ∀ a, b ∈ Set, a ◦⁻¹ a ◦ b = b ◦ a ◦⁻¹ a = b
 /// ~~~
 pub trait PartialGroup: Monoid {
-    fn inverse_operate(lhs: Self::Set, rhs: Self::Set) -> Self::Set;
+    fn inverse_operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set;
 }
 
 /// [Group](https://en.wikipedia.org/wiki/Group_(mathematics)) is a [`Monoid`] with inverse element.
@@ -57,5 +57,5 @@ pub trait PartialGroup: Monoid {
 /// ~~~
 pub trait MathGroup: PartialGroup {
     /// The inverse element of `self`.
-    fn inverse(x: Self::Set) -> Self::Set;
+    fn inverse(x: &Self::Set) -> Self::Set;
 }

@@ -6,18 +6,18 @@ pub struct MinAlge<T>(PhantomData<T>);
 
 impl<T> Semigroup for MinAlge<T>
 where
-    T: Clone + Ord,
+    T: Ord + Clone,
 {
     type Set = T;
 
-    fn operate(lhs: Self::Set, rhs: Self::Set) -> Self::Set {
-        lhs.min(rhs)
+    fn operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set {
+        lhs.min(rhs).clone()
     }
 }
 
 impl<T> Monoid for MinAlge<T>
 where
-    T: Clone + Ord + BoundedAbove,
+    T: Ord + Clone + BoundedAbove,
 {
     fn id() -> Self::Set {
         T::SUPREMUM

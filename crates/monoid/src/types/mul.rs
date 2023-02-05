@@ -8,18 +8,19 @@ pub struct MulAlge<T>(PhantomData<T>);
 
 impl<T> Semigroup for MulAlge<T>
 where
-    T: Clone + Mul<Output = T>,
+    for<'a> &'a T: Mul<Output = T>,
 {
     type Set = T;
 
-    fn operate(lhs: Self::Set, rhs: Self::Set) -> Self::Set {
+    fn operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set {
         lhs * rhs
     }
 }
 
 impl<T> Monoid for MulAlge<T>
 where
-    T: Clone + Mul<Output = T> + One,
+    T: One,
+    for<'a> &'a T: Mul<Output = T>,
 {
     fn id() -> Self::Set {
         T::ONE
@@ -28,18 +29,20 @@ where
 
 impl<T> PartialGroup for MulAlge<T>
 where
-    T: Clone + Mul<Output = T> + One + Div<Output = T> + Recip<Output = T>,
+    T: One,
+    for<'a> &'a T: Mul<Output = T> + Div<Output = T>,
 {
-    fn inverse_operate(lhs: Self::Set, rhs: Self::Set) -> Self::Set {
+    fn inverse_operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set {
         lhs / rhs
     }
 }
 
 impl<T> MathGroup for MulAlge<T>
 where
-    T: Clone + Mul<Output = T> + One + Div<Output = T> + Recip<Output = T>,
+    T: One,
+    for<'a> &'a T: Mul<Output = T> + Div<Output = T> + Recip<Output = T>,
 {
-    fn inverse(x: Self::Set) -> Self::Set {
+    fn inverse(x: &Self::Set) -> Self::Set {
         x.recip()
     }
 }

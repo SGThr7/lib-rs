@@ -6,18 +6,18 @@ pub struct MaxAlge<T>(PhantomData<T>);
 
 impl<T> Semigroup for MaxAlge<T>
 where
-    T: Clone + Ord,
+    T: Ord + Clone,
 {
     type Set = T;
 
-    fn operate(lhs: Self::Set, rhs: Self::Set) -> Self::Set {
-        lhs.max(rhs)
+    fn operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set {
+        lhs.max(rhs).clone()
     }
 }
 
 impl<T> Monoid for MaxAlge<T>
 where
-    T: Clone + Ord + BoundedBelow,
+    T: Ord + Clone + BoundedBelow,
 {
     fn id() -> Self::Set {
         T::INFIMUM

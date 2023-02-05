@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    mem::replace,
+    mem,
     ops::{Bound, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
 };
 
@@ -20,33 +20,39 @@ use monoid::{Monoid, PartialGroup};
 /// [`operate`]: FenwickTree::operate
 /// [`fold`]: FenwickTree::fold
 #[derive(Clone)]
-pub struct FenwickTree<T: Monoid> {
-    tree: Vec<T::Set>,
+pub struct FenwickTree<M: Monoid> {
+    tree: Vec<M::Set>,
 }
 
-pub type BIT<T> = FenwickTree<T>;
+pub type BIT<M> = FenwickTree<M>;
 
-pub type BinaryIndexedTree<T> = FenwickTree<T>;
+pub type BinaryIndexedTree<M> = FenwickTree<M>;
 
-impl<T: Monoid> FenwickTree<T> {
-    /// Creates an initialized Fenwick tree that size of `size` with [`<T as Monoid>::id()`].
+impl<M: Monoid> FenwickTree<M> {
+    /// Creates an initialized Fenwick tree that size of `size` with [`<M as Monoid>::id()`].
     ///
-    /// [`<T as Monoid>::id()`]: Monoid::id
+    /// [`<M as Monoid>::id()`]: Monoid::id
     pub fn with_size(size: usize) -> Self {
-        Self {
-            tree: vec![T::id(); size],
-        }
+        let tree = {
+            let mut ret = Vec::with_capacity(size);
+            ret.resize_with(size, M::id);
+            ret
+        };
+
+        Self { tree }
     }
 
+    #[allow(clippy::len_without_is_empty)]
     /// Returns the number of elements in the tree.
     pub fn len(&self) -> usize {
         self.tree.len()
     }
 
-    /// Returns `true` if the tree has a length of 0.
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
+    // Note: Enable it if this struct can be extended.
+    // /// Returns `true` if the tree has a length of 0.
+    // pub fn is_empty(&self) -> bool {
+    //     self.len() == 0
+    // }
 
     /// Update a tree value with [`Semigroup::operate`].
     ///
@@ -62,15 +68,18 @@ impl<T: Monoid> FenwickTree<T> {
     ///
     /// let mut bit: FenwickTree<AddAlge<_>> = vec![1, 2, 3, 4].into();
     /// assert_eq!(bit.fold(..), 10);
-    /// bit.operate(2, 5);
+    ///
+    /// bit.operate(2, &5);
     /// assert_eq!(bit.fold(..2), 3);
     /// assert_eq!(bit.fold(..), 15);
     /// ```
-    pub fn operate(&mut self, index: usize, value: T::Set) {
+    pub fn operate(&mut self, index: usize, value: &M::Set) {
         let mut i = index;
         while i < self.len() {
-            let val = replace(&mut self.tree[i], T::id());
-            self.tree[i] = T::operate(value.clone(), val);
+            // drain
+            let current = mem::replace(&mut self.tree[i], M::id());
+
+            self.tree[i] = M::operate(value, &current);
             i += lsb(i + 1);
         }
     }
@@ -91,6 +100,7 @@ impl<T: Monoid> FenwickTree<T> {
     /// use monoid::types::AddAlge;
     ///
     /// let bit: FenwickTree<AddAlge<_>> = vec![1, 2, 3, 4].into();
+    ///
     /// assert_eq!(bit.fold(..2), 3);
     /// assert_eq!(bit.fold(..=2), 6);
     /// assert_eq!(bit.fold(..), 10);
@@ -110,22 +120,31 @@ impl<T: Monoid> FenwickTree<T> {
     /// assert_eq!(bit.fold(1..), 9);
     /// assert_eq!(bit.fold((Bound::Excluded(1), Bound::Excluded(3))), 3);
     /// ```
-    pub fn fold<I: Index<T>>(&self, index: I) -> T::Set {
+    pub fn fold<I: Index<M>>(&self, index: I) -> M::Set {
         index.fold(self)
     }
 }
 
-impl<T: Monoid> From<Vec<T::Set>> for BinaryIndexedTree<T> {
-    fn from(v: Vec<T::Set>) -> Self {
+impl<M: Monoid> From<&[M::Set]> for FenwickTree<M> {
+    fn from(v: &[M::Set]) -> Self {
         let mut ret = Self::with_size(v.len());
-        v.into_iter()
-            .enumerate()
-            .for_each(|(i, x)| ret.operate(i, x));
+
+        // set each value to tree
+        v.iter().enumerate().for_each(|(i, x)| ret.operate(i, x));
+
         ret
     }
 }
 
+impl<M: Monoid> From<Vec<M::Set>> for FenwickTree<M> {
+    fn from(v: Vec<M::Set>) -> Self {
+        v.as_slice().into()
+    }
+}
+
 /// Returns the least significant bit by `i`.
+///
+/// e.g.) `lsb(0b1010)` returns `0b10`
 fn lsb(i: usize) -> usize {
     i & i.wrapping_neg()
 }
@@ -133,10 +152,13 @@ fn lsb(i: usize) -> usize {
 #[cfg(test)]
 #[test]
 fn lsb_test() {
+    assert_eq!(lsb(0b1010), 0b10);
+
     for i in 1..=(1e7 as usize) {
         let t = lsb(i);
-        assert_eq!(t.trailing_zeros(), i.trailing_zeros());
+
         assert_eq!(t.count_ones(), 1);
+        assert_eq!(t.trailing_zeros(), i.trailing_zeros());
     }
 }
 
@@ -147,11 +169,13 @@ pub trait Index<T: Monoid> {
 impl<T: Monoid> Index<T> for RangeTo<usize> {
     fn fold(self, tree: &FenwickTree<T>) -> T::Set {
         let mut ret = T::id();
+
         let mut i = self.end;
         while i > 0 {
-            ret = T::operate(tree.tree[i - 1].clone(), ret);
+            ret = T::operate(&tree.tree[i - 1], &ret);
             i -= lsb(i);
         }
+
         ret
     }
 }
@@ -170,19 +194,19 @@ impl<T: Monoid> Index<T> for RangeFull {
 
 impl<T: PartialGroup> Index<T> for Range<usize> {
     fn fold(self, tree: &FenwickTree<T>) -> T::Set {
-        T::inverse_operate((..self.end).fold(tree), (..self.start).fold(tree))
+        T::inverse_operate(&(..self.end).fold(tree), &(..self.start).fold(tree))
     }
 }
 
 impl<T: PartialGroup> Index<T> for RangeInclusive<usize> {
     fn fold(self, tree: &FenwickTree<T>) -> T::Set {
-        T::inverse_operate((..=*self.end()).fold(tree), (..*self.start()).fold(tree))
+        T::inverse_operate(&(..=*self.end()).fold(tree), &(..*self.start()).fold(tree))
     }
 }
 
 impl<T: PartialGroup> Index<T> for RangeFrom<usize> {
     fn fold(self, tree: &FenwickTree<T>) -> T::Set {
-        T::inverse_operate((..).fold(tree), (..self.start).fold(tree))
+        T::inverse_operate(&(..).fold(tree), &(..self.start).fold(tree))
     }
 }
 
@@ -198,11 +222,15 @@ impl<T: PartialGroup> Index<T> for (Bound<usize>, Bound<usize>) {
             Bound::Excluded(i) => i,
             Bound::Unbounded => tree.len(),
         };
-        T::inverse_operate((..end).fold(tree), (..start).fold(tree))
+
+        T::inverse_operate(&(..end).fold(tree), &(..start).fold(tree))
     }
 }
 
-impl<T: Monoid> Bisect for FenwickTree<T> {
+impl<T: Monoid> Bisect for FenwickTree<T>
+where
+    T::Set: Clone,
+{
     type Item = T::Set;
 
     fn find_range_by<F>(&self, mut f: F) -> Range<usize>
@@ -215,7 +243,7 @@ impl<T: Monoid> Bisect for FenwickTree<T> {
 
         while len > 0 {
             if i + len - 1 < self.len() {
-                let tmp = T::operate(total.clone(), self.tree[i + len - 1].clone());
+                let tmp = T::operate(&total, &self.tree[i + len - 1]);
                 let cmp = f(&tmp);
                 match cmp {
                     Ordering::Less => {
@@ -235,7 +263,7 @@ impl<T: Monoid> Bisect for FenwickTree<T> {
         let mut upper_i = i;
         let mut upper_total = total;
         while len > 0 {
-            let lower_tmp = T::operate(lower_total.clone(), self.tree[i + len - 1].clone());
+            let lower_tmp = T::operate(&lower_total, &self.tree[i + len - 1]);
             let lower_cmp = f(&lower_tmp);
             match lower_cmp {
                 Ordering::Less => {
@@ -245,7 +273,7 @@ impl<T: Monoid> Bisect for FenwickTree<T> {
                 Ordering::Equal | Ordering::Greater => (),
             }
 
-            let upper_tmp = T::operate(upper_total.clone(), self.tree[i + len - 1].clone());
+            let upper_tmp = T::operate(&upper_total, &self.tree[i + len - 1]);
             let upper_cmp = f(&upper_tmp);
             match upper_cmp {
                 Ordering::Equal | Ordering::Less => {
@@ -266,6 +294,16 @@ impl<T: Monoid> Bisect for FenwickTree<T> {
 mod tests {
     use super::*;
     use monoid::types::AddAlge;
+
+    #[test]
+    fn with_size_and_len() {
+        type Set = AddAlge<usize>;
+        let bit = FenwickTree::<Set>::with_size(10);
+
+        assert_eq!(bit.len(), 10);
+        assert_eq!(bit.tree.len(), 10);
+        assert_eq!(bit.tree, vec![Set::id(); 10]);
+    }
 
     #[test]
     fn find_range_by() {

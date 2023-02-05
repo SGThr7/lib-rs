@@ -1,0 +1,10 @@
+[package]
+name = "sgthr7-lib-segment-tree"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+name = "segment_tree"
+
+[dependencies]
+sgthr7-lib-monoid = { path = "../monoid" }

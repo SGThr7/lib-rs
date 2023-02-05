@@ -9,18 +9,19 @@ pub struct BitXorAlge<T>(PhantomData<T>);
 
 impl<T> Semigroup for BitXorAlge<T>
 where
-    T: Clone + BitXor<Output = T>,
+    for<'a> &'a T: BitXor<Output = T>,
 {
     type Set = T;
 
-    fn operate(lhs: Self::Set, rhs: Self::Set) -> Self::Set {
+    fn operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set {
         lhs ^ rhs
     }
 }
 
 impl<T> Monoid for BitXorAlge<T>
 where
-    T: Clone + BitXor<Output = T> + Zero,
+    T: Zero,
+    for<'a> &'a T: BitXor<Output = T>,
 {
     fn id() -> Self::Set {
         T::ZERO
@@ -29,18 +30,20 @@ where
 
 impl<T> PartialGroup for BitXorAlge<T>
 where
-    T: Clone + BitXor<Output = T> + Zero,
+    T: Zero,
+    for<'a> &'a T: BitXor<Output = T>,
 {
-    fn inverse_operate(lhs: T, rhs: T) -> T {
+    fn inverse_operate(lhs: &Self::Set, rhs: &Self::Set) -> Self::Set {
         lhs ^ rhs
     }
 }
 
 impl<T> MathGroup for BitXorAlge<T>
 where
-    T: Clone + BitXor<Output = T> + Zero,
+    T: Zero + Clone,
+    for<'a> &'a T: BitXor<Output = T>,
 {
-    fn inverse(x: Self::Set) -> Self::Set {
-        x
+    fn inverse(x: &Self::Set) -> Self::Set {
+        x.clone()
     }
 }
